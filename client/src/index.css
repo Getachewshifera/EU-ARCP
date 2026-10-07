@@ -1,0 +1,7 @@
+/* Purpose: Global application styles and page defaults. */
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background-color: #f8f9fa;
+}

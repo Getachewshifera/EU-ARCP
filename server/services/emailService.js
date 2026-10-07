@@ -1,0 +1,1 @@
+// Purpose: Outbound email delivery.

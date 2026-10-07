@@ -1,0 +1,1 @@
+// Purpose: Group chat messages.

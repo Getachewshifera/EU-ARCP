@@ -1,0 +1,1 @@
+// Purpose: Tests authentication behavior.

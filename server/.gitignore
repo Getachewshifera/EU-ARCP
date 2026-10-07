@@ -1,0 +1,5 @@
+# Purpose: Excludes server-local dependencies, environment secrets, uploads, and logs from Git.
+node_modules/
+.env
+uploads/
+*.log

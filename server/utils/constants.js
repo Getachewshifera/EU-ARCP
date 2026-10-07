@@ -1,0 +1,1 @@
+// Purpose: Shared server constants.
