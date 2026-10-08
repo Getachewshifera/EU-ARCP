@@ -2,22 +2,15 @@
 const mongoose = require('mongoose');
 
 async function connectDatabase(mongoUri) {
-  const uri = mongoUri || process.env.MONGODB_URI;
-
-  if (!uri) {
-    console.warn('MongoDB connection skipped because MONGODB_URI is not configured.');
-    return null;
+  const uri = (mongoUri || process.env.MONGODB_URI || '').trim();
+  if (!uri) throw new Error('MONGODB_URI is required to start the API.');
+  if (!/^mongodb(?:\+srv)?:\/\//i.test(uri)) {
+    throw new Error('MONGODB_URI must use mongodb:// or mongodb+srv://.');
   }
-
-  try {
-    mongoose.set('strictQuery', true);
-    await mongoose.connect(uri);
-    console.log('MongoDB connected successfully.');
-    return mongoose.connection;
-  } catch (error) {
-    console.error('MongoDB connection failed:', error.message);
-    throw error;
-  }
+  mongoose.set('strictQuery', true);
+  await mongoose.connect(uri);
+  console.log('MongoDB connected successfully.');
+  return mongoose.connection;
 }
 
 async function disconnectDatabase() {
@@ -27,8 +20,4 @@ async function disconnectDatabase() {
   }
 }
 
-module.exports = {
-  connectDatabase,
-  disconnectDatabase,
-};
-
+module.exports = { connectDatabase, disconnectDatabase };

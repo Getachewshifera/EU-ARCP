@@ -14,13 +14,10 @@ if (fs.existsSync(envPath)) {
 const config = {
   PORT: Number(process.env.PORT) || 5000,
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-  MONGODB_URI: process.env.MONGODB_URI || '',
+  MONGODB_URI: (process.env.MONGODB_URI || '').trim(),
+  JWT_SECRET: process.env.JWT_SECRET || '',
+  PUBLIC_API_URL: (process.env.PUBLIC_API_URL || `http://localhost:${Number(process.env.PORT) || 5000}`).replace(/\/+$/, ''),
   NODE_ENV: process.env.NODE_ENV || 'development',
 };
 
-if (!config.MONGODB_URI) {
-  console.warn('MONGODB_URI is not set. MongoDB connection will be skipped until a valid .env value is provided.');
-}
-
 module.exports = config;
-

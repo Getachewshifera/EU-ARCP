@@ -1,7 +1,6 @@
 # EU-ARCP
 
-EU-ARCP is scaffolded as an npm-workspaces application with a React/Vite client and an Express API.
-The files under `client/src/components`, `client/src/pages`, and most of `server` are starter placeholders: their descriptions below explain their intended responsibilities, not features that have already been implemented.
+EU-ARCP is an npm-workspaces application with a React/Vite client and an Express/MongoDB API. The server exposes authenticated account, learning-material, study-group, messaging, notification, reporting, academic-resource, and administrator APIs.
 
 ## Requirements
 
@@ -16,7 +15,11 @@ From the project root, install all workspace dependencies:
 npm install
 ```
 
-Copy `client/.env.example` to `client/.env` and `server/.env.example` to `server/.env` if you need to override the local defaults.
+The server reads its configuration from `server/.env`. Copy `server/.env.example` to `server/.env`; the default `MONGODB_URI` expects MongoDB on `127.0.0.1:27017`. Set `JWT_SECRET` to a private random value with at least 32 characters; generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS` for email delivery. In development without SMTP, verification codes are written to the API terminal; production requires SMTP. Set `PUBLIC_API_URL` to the API's public base URL for material downloads. The API exits if MongoDB is missing, invalid, or unreachable.
+
+To create the first administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` (at least 12 characters) in `server/.env`, then run `npm run seed:admin --workspace server`. Keep these values private.
+
+Copy `client/.env.example` to `client/.env` only when you need to override client settings.
 
 Start the client and API in separate terminals:
 
@@ -33,7 +36,17 @@ Build the client for production with:
 npm run build
 ```
 
-The feature folders and files are initial placeholders for subsequent implementation.
+## Admin client
+
+The client includes an administration workspace at `/admin`, with pages for the dashboard, users, registration requests, universities, academic structure, categories, materials, groups, reports, activity logs, and system settings. Set `VITE_API_URL` to the API base URL; it defaults to `http://localhost:5000/api`.
+
+All administrative routes require an unexpired HS256 bearer token for an active, approved admin account. Admin APIs include `/admin/dashboard`, `/admin/activity-logs`, `/users`, `/registrations`, `/universities`, `/academic/*`, `/categories`, `/materials`, `/groups`, `/reports`, and `/settings`. User role/status updates are constrained; the last active admin cannot be demoted or suspended. Administrative frontend routes are not an authorization boundary—the API enforces access.
+
+## Server API
+
+Auth endpoints support registration, email verification, sign-in, password recovery, and sign-out. Registration remains pending until email verification and admin approval. Profile endpoints support account updates and password changes. Material uploads accept PDF, Office, text, JPEG, and PNG files up to 20 MB; uploaded files remain private unless approved. Group membership/chat, private conversations, personal notifications, reports, and student/lecturer dashboards require bearer authentication. Collection lists return `{ items: [...] }`; generic resource routes also include `total`, `page`, and `pages`.
+
+Public registration-status checks accept an email address and reveal the latest application status. For deployment, configure HTTPS, a strong `JWT_SECRET`, SMTP delivery, MongoDB network restrictions, and an explicit `CLIENT_ORIGIN`.
 
 ## File guide
 
