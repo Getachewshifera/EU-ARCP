@@ -11,18 +11,27 @@ function MaterialDetails() {
 
   useEffect(() => {
     let active = true
-    setLoading(true)
-    materialService.get(id)
-      .then((response) => {
+    async function loadMaterial() {
+      try {
+        const response = await materialService.get(id)
         if (active) setMaterial(response.data?.data ?? response.data)
-      })
-      .catch((requestError) => {
+      } catch (requestError) {
         if (active) setError(requestError.response?.data?.message || requestError.message || 'Unable to load this material.')
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false)
-      })
-    return () => { active = false }
+      }
+    }
+
+    const timer = window.setTimeout(() => {
+      setLoading(true)
+      setError('')
+      setMaterial(null)
+      void loadMaterial()
+    }, 0)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
   }, [id])
 
   return (

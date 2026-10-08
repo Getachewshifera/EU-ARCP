@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import lecturerService from '../../services/lecturerService.js'
-import { errorMessage, PageHeader } from '../../components/portal/lecturer/LecturerUI.jsx'
+import { PageHeader } from '../../components/portal/lecturer/LecturerUI.jsx'
+import { errorMessage } from '../../components/portal/lecturer/lecturerUtils.js'
 
 function UploadMaterial() {
   const navigate = useNavigate()

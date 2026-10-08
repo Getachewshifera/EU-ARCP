@@ -1,6 +1,7 @@
 // Purpose: Shared client authentication state and actions.
 import { useCallback, useMemo, useState } from 'react'
 import AuthContext from './authContext.js'
+import authService from '../services/authService.js'
 
 function readStoredUser() {
   try {

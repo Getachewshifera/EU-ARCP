@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import lecturerService from '../../services/lecturerService.js'
-import { errorMessage, PageHeader } from '../../components/portal/lecturer/LecturerUI.jsx'
+import { PageHeader } from '../../components/portal/lecturer/LecturerUI.jsx'
+import { errorMessage } from '../../components/portal/lecturer/lecturerUtils.js'
 
 function ChangePassword() {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
