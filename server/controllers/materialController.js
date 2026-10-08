@@ -130,7 +130,10 @@ async function download(request, response, next) {
     response.type(item.mimeType);
     response.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(item.fileName)}`);
     const stream = require('fs').createReadStream(filePath);
-    stream.on('error', next);
+    stream.on('error', (error) => {
+      if (response.headersSent) response.destroy(error);
+      else next(error);
+    });
     return stream.pipe(response);
   } catch (error) {
     return next(error);
