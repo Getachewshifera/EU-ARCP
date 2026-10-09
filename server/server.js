@@ -5,6 +5,7 @@ const express = require('express');
 const { PORT, CLIENT_ORIGIN, MONGODB_URI } = require('./config/environment');
 const { connectDatabase } = require('./config/database');
 const mongoose = require('mongoose');
+const { seedUniversities } = require('./seeders/universitySeeder');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -65,6 +66,7 @@ async function startServer() {
       throw new Error('JWT_SECRET must contain at least 32 characters.');
     }
     await connectDatabase(MONGODB_URI);
+    await seedUniversities();
     app.listen(PORT, () => {
       console.log(`EU-ARCP API listening on port ${PORT}`);
     });
