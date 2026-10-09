@@ -1,1 +1,20 @@
 // Purpose: Shared server constants.
+const DEFAULT_PORT = 5000;
+const DEFAULT_CLIENT_ORIGIN = 'http://localhost:5173';
+const DEFAULT_PUBLIC_API_URL = `http://localhost:${DEFAULT_PORT}`;
+const JWT_MIN_LENGTH = 32;
+const OTP_LENGTH = 6;
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 200;
+const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
+
+module.exports = {
+  DEFAULT_PORT,
+  DEFAULT_CLIENT_ORIGIN,
+  DEFAULT_PUBLIC_API_URL,
+  JWT_MIN_LENGTH,
+  OTP_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  MAX_UPLOAD_SIZE_BYTES,
+};

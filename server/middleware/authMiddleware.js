@@ -21,15 +21,15 @@ async function authMiddleware(request, response, next) {
   }
 
   const user = await User.findById(claims.sub)
-    .select('_id name email role status isActive approvalStatus emailVerified');
+    .select('_id name email role status isActive approvalStatus emailVerified mustChangePassword');
   if (!user) {
     return response.status(401).json({ message: 'The account for this token no longer exists.' });
   }
-  if (user.isActive === false || user.status === 'suspended') {
-    return response.status(403).json({ message: 'This account is suspended.' });
+  if (user.isActive === false || user.status === 'DISABLED' || user.status === 'EXPIRED' || user.status === 'suspended') {
+    return response.status(403).json({ message: 'This account is disabled or expired.' });
   }
-  if (user.approvalStatus !== 'approved' || user.emailVerified === false) {
-    return response.status(403).json({ message: 'This account is not approved and verified.' });
+  if (user.status !== 'ACTIVE') {
+    return response.status(403).json({ message: 'This account must complete activation first.' });
   }
 
   request.user = user;

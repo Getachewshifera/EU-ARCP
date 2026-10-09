@@ -8,9 +8,9 @@ async function optionalAuthMiddleware(request, response, next) {
   if (!match) return next();
   try {
     const claims = verifyToken(match[1]);
-    const user = await User.findById(claims.sub).select('_id name email role status isActive approvalStatus emailVerified');
-    if (user && user.isActive !== false && user.status !== 'suspended'
-      && user.approvalStatus === 'approved' && user.emailVerified !== false) request.user = user;
+    const user = await User.findById(claims.sub)
+      .select('_id name email role status isActive approvalStatus emailVerified mustChangePassword');
+    if (user && user.isActive !== false && user.status === 'ACTIVE' && user.emailVerified !== false) request.user = user;
     return next();
   } catch (error) {
     return response.status(401).json({ message: 'The authentication token is invalid or expired.' });

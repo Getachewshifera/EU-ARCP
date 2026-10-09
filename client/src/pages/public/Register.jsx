@@ -1,7 +1,8 @@
 // Purpose: Public account registration page.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
+import adminService from '../../services/adminService.js'
 import authService from '../../services/authService.js'
 
 const initialForm = {
@@ -9,17 +10,46 @@ const initialForm = {
   firstName: '',
   lastName: '',
   email: '',
-  university: '',
+  universityId: '',
   password: '',
   confirmPassword: '',
 }
 
 function Register() {
   const [form, setForm] = useState(initialForm)
+  const [universities, setUniversities] = useState([])
+  const [loadingUniversities, setLoadingUniversities] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let isCancelled = false
+
+    async function loadUniversities() {
+      try {
+        const response = await adminService.listResource('universities')
+        const items = Array.isArray(response.data?.items) ? response.data.items : []
+        if (!isCancelled) {
+          setUniversities(items)
+        }
+      } catch (loadError) {
+        if (!isCancelled) {
+          setError(loadError.response?.data?.message || 'Unable to load Ethiopian universities.')
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoadingUniversities(false)
+        }
+      }
+    }
+
+    loadUniversities()
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   function update(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
@@ -29,6 +59,10 @@ function Register() {
     event.preventDefault()
     setError('')
     setNotice('')
+    if (!form.universityId) {
+      setError('Please select your university.')
+      return
+    }
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.')
       return
@@ -40,7 +74,7 @@ function Register() {
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
-      university: form.university,
+      universityId: form.universityId,
       password: form.password,
     }
     try {
@@ -88,7 +122,12 @@ function Register() {
         </div>
         <div>
           <label className="form-label" htmlFor="register-university">University</label>
-          <input className="form-control" id="register-university" name="university" onChange={update} required value={form.university} />
+          <select className="form-select" disabled={loadingUniversities} id="register-university" name="universityId" onChange={update} required value={form.universityId}>
+            <option value="">Select your university</option>
+            {universities.map((university) => (
+              <option key={university._id} value={university._id}>{university.name}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="form-label" htmlFor="register-password">Password</label>
@@ -98,7 +137,7 @@ function Register() {
           <label className="form-label" htmlFor="register-confirm-password">Confirm password</label>
           <input autoComplete="new-password" className="form-control" id="register-confirm-password" minLength="8" name="confirmPassword" onChange={update} required type="password" value={form.confirmPassword} />
         </div>
-        <button className="btn btn-primary btn-lg" disabled={submitting} type="submit">
+        <button className="btn btn-primary btn-lg" disabled={submitting || loadingUniversities} type="submit">
           {submitting ? 'Submitting…' : 'Create account'}
         </button>
       </form>

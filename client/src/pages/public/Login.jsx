@@ -8,7 +8,7 @@ function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -37,8 +37,8 @@ function Login() {
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <form className="vstack gap-3" onSubmit={submit}>
         <div>
-          <label className="form-label" htmlFor="login-email">Email address</label>
-          <input autoComplete="email" className="form-control" id="login-email" name="email" onChange={update} required type="email" value={form.email} />
+          <label className="form-label" htmlFor="login-username">Username</label>
+          <input autoComplete="username" className="form-control" id="login-username" name="username" onChange={update} required type="text" value={form.username} />
         </div>
         <div>
           <label className="form-label" htmlFor="login-password">Password</label>

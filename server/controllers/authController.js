@@ -1,12 +1,21 @@
 // Purpose: Handles authentication and account verification requests.
 const crypto = require('crypto');
+const fs = require('fs/promises');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const University = require('../models/University');
+const College = require('../models/College');
+const Department = require('../models/Department');
+const Program = require('../models/Program');
 const RegistrationRequest = require('../models/RegistrationRequest');
-const { sendOtpEmail } = require('../services/emailService');
+const { sendOtpEmail, sendActivationEmail } = require('../services/emailService');
+const { generateUniqueUsername, normalizeIdentityId } = require('../services/usernameService');
+const { generatePassword } = require('../utils/generatePassword');
 const { hashPassword, hashSecret, verifyPassword } = require('../utils/password');
 const { signToken } = require('../utils/token');
 
 const OTP_LIFETIME_MS = 10 * 60 * 1000;
+const ACTIVATION_WINDOW_MS = 5 * 60 * 1000;
 
 function normalizeEmail(email) {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -39,59 +48,164 @@ async function saveAndSendOtp(user, purpose) {
   }
 }
 
+async function validateAcademicReferences({ universityId, collegeId, departmentId, programId, level }) {
+  const university = universityId ? await University.findById(universityId).lean() : null;
+  if (!university) {
+    throw new Error('The selected university was not found.');
+  }
+
+  if (collegeId) {
+    const college = await College.findById(collegeId).lean();
+    if (!college || String(college.university) !== String(university._id)) {
+      throw new Error('The selected college does not belong to the selected university.');
+    }
+  }
+
+  if (departmentId) {
+    const department = await Department.findById(departmentId).lean();
+    if (!department || String(department.university || department.college) !== String(university._id)) {
+      throw new Error('The selected department does not belong to the selected university.');
+    }
+  }
+
+  if (programId) {
+    const program = await Program.findById(programId).lean();
+    if (!program) {
+      throw new Error('The selected program was not found.');
+    }
+    const department = await Department.findById(program.department).lean();
+    if (!department || String(department.university || department.college) !== String(university._id)) {
+      throw new Error('The selected program does not match the selected academic structure.');
+    }
+  }
+
+  if (level === 'student' && !collegeId) {
+    throw new Error('College is required for student registration.');
+  }
+  if (level === 'student' && !departmentId) {
+    throw new Error('Department is required for student registration.');
+  }
+  if (level === 'student' && !programId) {
+    throw new Error('Program is required for student registration.');
+  }
+
+  return { university, collegeId, departmentId, programId };
+}
+
 async function register(request, response, next) {
   try {
-    const { firstName, lastName, email, university, password } = request.body || {};
-    const role = request.params.role;
-    const normalizedEmail = normalizeEmail(email);
-    if (!firstName?.trim() || !lastName?.trim() || !normalizedEmail || !university?.trim()) {
-      return response.status(400).json({ message: 'First name, last name, email, and university are required.' });
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      return response.status(400).json({ message: 'Enter a valid email address.' });
-    }
-    if (typeof password !== 'string' || password.length < 8 || password.length > 200) {
-      return response.status(400).json({ message: 'Password must be at least 8 characters.' });
-    }
-    if (await User.exists({ email: normalizedEmail })) {
-      return response.status(409).json({ message: 'An account with this email already exists.' });
+    const role = String(request.params.role || '').toLowerCase();
+    const payload = request.body || {};
+    if (!['student', 'lecturer'].includes(role)) {
+      return response.status(400).json({ message: 'Only student and lecturer registrations are supported.' });
     }
 
-    const user = await User.create({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      name: `${firstName.trim()} ${lastName.trim()}`,
-      email: normalizedEmail,
-      password: await hashPassword(password),
-      university: university.trim(),
-      role,
-      status: 'active',
-      approvalStatus: 'pending',
-      emailVerified: false,
-      isActive: true,
-    });
-    let registration;
+    const firstName = String(payload.firstName || '').trim();
+    const middleName = String(payload.middleName || '').trim();
+    const lastName = String(payload.lastName || '').trim();
+    const email = normalizeEmail(payload.email);
+    const phone = typeof payload.phone === 'string' ? payload.phone.trim() : '';
+    const universityId = String(payload.universityId || payload.university || '').trim();
+    const collegeId = String(payload.collegeId || payload.college || '').trim();
+    const departmentId = String(payload.departmentId || payload.department || '').trim();
+    const programId = String(payload.programId || payload.program || '').trim();
+    const academicYear = typeof payload.academicYear === 'string' ? payload.academicYear.trim() : '';
+    const identityId = normalizeIdentityId(role === 'student' ? (payload.studentId || payload.identityId || payload.universityId) : (payload.lecturerId || payload.identityId));
+
+    if (!firstName || !lastName || !email || !universityId || !identityId) {
+      return response.status(400).json({ message: 'First name, last name, email, university, and identity ID are required.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return response.status(400).json({ message: 'Enter a valid email address.' });
+    }
+    if (phone && !/^[+]?[(]?[0-9]{1,4}[)]?[-\s0-9]{6,}$/.test(phone)) {
+      return response.status(400).json({ message: 'Enter a valid phone number.' });
+    }
+    if (role === 'student' && (!academicYear || !/^(Year\s*\d+|\d+)$/.test(academicYear))) {
+      return response.status(400).json({ message: 'Academic year is required for student registration.' });
+    }
+    if (!mongoose.isValidObjectId(universityId)) {
+      return response.status(400).json({ message: 'University reference is invalid.' });
+    }
+
+    await validateAcademicReferences({ universityId, collegeId, departmentId, programId, level: role });
+
+    const existing = await User.findOne({ $or: [{ email }, { role, identityId }] }).lean();
+    if (existing) {
+      return response.status(409).json({ message: 'An account with this email or identity ID already exists.' });
+    }
+
+    let registrationRecord = null;
+    const generatedUsername = await generateUniqueUsername({ role, identityId });
+    const temporaryPassword = generatePassword(14);
+    const profilePhoto = request.file ? `/uploads/${request.file.filename}` : (typeof payload.profilePhoto === 'string' ? payload.profilePhoto.trim() : '');
+
+    if (request.file && !['image/jpeg', 'image/png'].includes(request.file.mimetype)) {
+      await fs.unlink(request.file.path).catch(() => {});
+      return response.status(400).json({ message: 'Profile photo must be a JPEG or PNG image.' });
+    }
+
     try {
-      registration = await RegistrationRequest.create({
-        user: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        university: university.trim(),
+      const user = await User.create({
+        firstName,
+        middleName,
+        lastName,
+        name: `${firstName} ${middleName ? `${middleName} ` : ''}${lastName}`.trim(),
+        username: generatedUsername,
+        email,
+        password: await hashPassword(temporaryPassword),
         role,
+        status: 'PENDING_ACTIVATION',
+        mustChangePassword: true,
+        activationExpiresAt: new Date(Date.now() + ACTIVATION_WINDOW_MS),
+        university: universityId,
+        college: collegeId || undefined,
+        department: departmentId || undefined,
+        program: programId || undefined,
+        academicYear: role === 'student' ? academicYear : undefined,
+        identityId,
+        studentId: role === 'student' ? identityId : undefined,
+        lecturerId: role === 'lecturer' ? identityId : undefined,
+        phone: phone || undefined,
+        profilePhoto: profilePhoto || undefined,
+        isActive: true,
+        emailVerified: true,
       });
-      await saveAndSendOtp(user, 'registration');
+
+      registrationRecord = await RegistrationRequest.create({
+        user: user._id,
+        firstName,
+        middleName,
+        lastName,
+        email,
+        username: generatedUsername,
+        role,
+        university: universityId,
+        college: collegeId || undefined,
+        department: departmentId || undefined,
+        program: programId || undefined,
+        identityId,
+        academicYear: role === 'student' ? academicYear : undefined,
+        status: 'submitted',
+      });
+
+      await sendActivationEmail(email, generatedUsername, temporaryPassword, role);
+      return response.status(201).json({
+        username: generatedUsername,
+        email,
+        status: 'PENDING_ACTIVATION',
+        requiresPasswordChange: true,
+        message: 'Registration submitted successfully. Use your temporary username and password to activate your account within five minutes.',
+        registrationId: String(registrationRecord._id),
+      });
     } catch (error) {
-      if (registration) await RegistrationRequest.deleteOne({ _id: registration._id });
-      await User.deleteOne({ _id: user._id });
+      if (request.file) await fs.unlink(request.file.path).catch(() => {});
+      if (registrationRecord) await RegistrationRequest.deleteOne({ _id: registrationRecord._id }).catch(() => {});
+      if (error?.code === 11000) {
+        return response.status(409).json({ message: 'This email or identity ID has already been used.' });
+      }
       throw error;
     }
-    return response.status(201).json({
-      email: user.email,
-      status: 'pending',
-      requiresVerification: true,
-      message: 'Registration submitted. Verify your email before signing in.',
-    });
   } catch (error) {
     return next(error);
   }
@@ -99,26 +213,107 @@ async function register(request, response, next) {
 
 async function login(request, response, next) {
   try {
-    const email = normalizeEmail(request.body?.email);
+    const usernameInput = typeof request.body?.username === 'string' ? request.body.username.trim() : '';
+    const emailInput = normalizeEmail(request.body?.email || '');
+    const loginKey = usernameInput || emailInput;
     const password = request.body?.password;
-    if (!email || typeof password !== 'string') {
-      return response.status(400).json({ message: 'Email and password are required.' });
+    if (!loginKey || typeof password !== 'string') {
+      return response.status(400).json({ message: 'Username or email and password are required.' });
     }
-    const user = await User.findOne({ email }).select('+password');
+
+    const user = await User.findOne({
+      $or: [{ username: loginKey.toLowerCase() }, { email: loginKey.toLowerCase() }],
+    }).select('+password');
+
     if (!user || !(await verifyPassword(password, user.password))) {
-      return response.status(401).json({ message: 'Email or password is incorrect.' });
+      return response.status(401).json({ message: 'Invalid username or password.' });
     }
-    if (user.status === 'suspended' || user.isActive === false) {
-      return response.status(403).json({ message: 'This account is suspended.' });
+
+    if (user.status === 'PENDING_ACTIVATION') {
+      if (user.activationExpiresAt && new Date(user.activationExpiresAt).getTime() <= Date.now()) {
+        user.status = 'EXPIRED';
+        user.isActive = false;
+        await user.save();
+        return response.status(403).json({ message: 'Your activation window has expired. Contact the administrator or re-register.' });
+      }
+      return response.json({
+        requiresPasswordChange: true,
+        username: user.username,
+        email: user.email,
+        message: 'Change your temporary password to complete activation.',
+      });
     }
-    if (!user.emailVerified) {
-      return response.status(403).json({ message: 'Verify your email before signing in.' });
+
+    if (user.status === 'DISABLED' || user.status === 'EXPIRED' || user.status === 'suspended') {
+      return response.status(403).json({ message: 'This account is not active.' });
     }
-    if (user.approvalStatus !== 'approved') {
-      return response.status(403).json({ message: 'Your registration is awaiting administrator approval.' });
+
+    if (user.status !== 'ACTIVE') {
+      return response.status(403).json({ message: 'Account access is restricted.' });
     }
+
     const token = signToken({ sub: String(user._id), role: user.role });
     return response.json({ token, user: publicUser(user) });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function activateAccount(request, response, next) {
+  try {
+    const usernameInput = typeof request.body?.username === 'string' ? request.body.username.trim() : '';
+    const email = normalizeEmail(request.body?.email || '');
+    const currentPassword = typeof request.body?.currentPassword === 'string' ? request.body.currentPassword : '';
+    const newPassword = typeof request.body?.newPassword === 'string' ? request.body.newPassword : '';
+    const confirmPassword = typeof request.body?.confirmPassword === 'string' ? request.body.confirmPassword : '';
+    const loginKey = usernameInput || email;
+
+    if (!loginKey || !currentPassword || !newPassword || !confirmPassword) {
+      return response.status(400).json({ message: 'Username, current password, and new password are required.' });
+    }
+    if (newPassword !== confirmPassword) {
+      return response.status(400).json({ message: 'The new password and confirmation do not match.' });
+    }
+    if (newPassword === currentPassword) {
+      return response.status(400).json({ message: 'Choose a different password than the temporary one.' });
+    }
+    if (newPassword.length < 8 || newPassword.length > 200) {
+      return response.status(400).json({ message: 'Password must be between 8 and 200 characters.' });
+    }
+
+    const user = await User.findOne({
+      $or: [{ username: loginKey.toLowerCase() }, { email: loginKey.toLowerCase() }],
+    }).select('+password');
+    if (!user) {
+      return response.status(401).json({ message: 'The account could not be found.' });
+    }
+    if (user.status !== 'PENDING_ACTIVATION') {
+      return response.status(403).json({ message: 'This account is not pending activation.' });
+    }
+    if (!(await verifyPassword(currentPassword, user.password))) {
+      return response.status(401).json({ message: 'The current password is incorrect.' });
+    }
+    if (user.activationExpiresAt && new Date(user.activationExpiresAt).getTime() <= Date.now()) {
+      user.status = 'EXPIRED';
+      user.isActive = false;
+      await user.save();
+      return response.status(403).json({ message: 'The activation deadline has passed. Please contact support.' });
+    }
+
+    user.password = await hashPassword(newPassword);
+    user.status = 'ACTIVE';
+    user.isActive = true;
+    user.mustChangePassword = false;
+    user.activationExpiresAt = null;
+    user.passwordChangedAt = new Date();
+    await user.save();
+
+    const token = signToken({ sub: String(user._id), role: user.role });
+    return response.json({
+      token,
+      user: publicUser(user),
+      message: 'Account activated successfully.',
+    });
   } catch (error) {
     return next(error);
   }
@@ -143,7 +338,7 @@ async function verifyOtp(request, response, next) {
     if (purpose === 'registration') {
       user.emailVerified = true;
       await user.save();
-      return response.json({ email, verified: true, status: user.approvalStatus });
+      return response.json({ email, verified: true, status: user.status });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -186,6 +381,7 @@ async function resetPassword(request, response, next) {
     user.password = await hashPassword(password);
     user.resetTokenHash = undefined;
     user.resetTokenExpiresAt = undefined;
+    user.mustChangePassword = false;
     await user.save();
     return response.json({ message: 'Password updated successfully.' });
   } catch (error) {
@@ -197,4 +393,4 @@ function logout(_request, response) {
   return response.json({ message: 'Signed out successfully.' });
 }
 
-module.exports = { register, login, verifyOtp, forgotPassword, resetPassword, logout };
+module.exports = { register, login, activateAccount, verifyOtp, forgotPassword, resetPassword, logout };

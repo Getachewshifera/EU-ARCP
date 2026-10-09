@@ -7,9 +7,9 @@ const Course = require('../models/Course');
 const createResourceRouter = require('./resourceRoutes');
 
 const router = express.Router();
-router.use('/colleges', createResourceRouter(College, { adminRead: true }));
-router.use('/departments', createResourceRouter(Department, { adminRead: true }));
-router.use('/programs', createResourceRouter(Program, { adminRead: true }));
-router.use('/courses', createResourceRouter(Course, { adminRead: true }));
+router.use('/colleges', createResourceRouter(College));
+router.use('/departments', createResourceRouter(Department));
+router.use('/programs', createResourceRouter(Program));
+router.use('/courses', createResourceRouter(Course));
 
 module.exports = router;
