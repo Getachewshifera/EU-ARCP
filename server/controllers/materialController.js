@@ -4,7 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Material = require('../models/Material');
 const ActivityLog = require('../models/ActivityLog');
-const { PUBLIC_API_URL } = require('../config/environment');
+// PUBLIC_API_URL removed — fileUrl now stores the disk filename directly
 
 function isAdmin(user) {
   return user?.role === 'admin';
@@ -18,7 +18,8 @@ function materialData(request) {
     description: request.body.description || '',
     category: request.body.category || undefined,
     uploader: request.user._id,
-    fileUrl: `${PUBLIC_API_URL}/api/materials/${request.materialId}/file`,
+    // Store the disk filename (UUID + ext) so download can resolve the path reliably
+    fileUrl: path.basename(request.file.path),
     fileName: request.file.originalname,
     mimeType: request.file.mimetype,
     fileSize: request.file.size,
@@ -116,6 +117,38 @@ async function upload(request, response, next) {
   }
 }
 
+// For legacy records that stored a full URL in fileUrl instead of the disk filename,
+// scan the uploads directory and find the best matching file by extension + mtime.
+async function findLegacyDiskFile(item) {
+  const uploadDir = path.resolve(__dirname, '../uploads');
+  const ext = item.fileName ? path.extname(item.fileName).toLowerCase() : '';
+  let entries;
+  try {
+    entries = await fs.readdir(uploadDir);
+  } catch {
+    return null;
+  }
+  // Only look at files in the root uploads dir (not sub-dirs like avatars/)
+  const candidates = [];
+  for (const name of entries) {
+    const full = path.join(uploadDir, name);
+    try {
+      const stat = await fs.stat(full);
+      if (!stat.isDirectory() && (!ext || name.toLowerCase().endsWith(ext))) {
+        candidates.push({ name, mtime: stat.mtimeMs });
+      }
+    } catch {
+      // skip unreadable entries
+    }
+  }
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0].name;
+  // Pick the file whose mtime is closest to createdAt
+  const createdMs = item.createdAt ? new Date(item.createdAt).getTime() : Date.now();
+  candidates.sort((a, b) => Math.abs(a.mtime - createdMs) - Math.abs(b.mtime - createdMs));
+  return candidates[0].name;
+}
+
 async function download(request, response, next) {
   if (!mongoose.isValidObjectId(request.params.id)) return response.status(400).json({ message: 'Material id is invalid.' });
   try {
@@ -125,11 +158,38 @@ async function download(request, response, next) {
     if (item.status !== 'approved' && !owner && !isAdmin(request.user)) {
       return response.status(404).json({ message: 'Material was not found.' });
     }
-    const filename = path.basename(new URL(item.fileUrl, PUBLIC_API_URL).pathname);
-    const filePath = path.resolve(__dirname, '../uploads', filename);
+
+    let diskFilename = item.fileUrl;
+
+    // Legacy records stored a full URL — the actual disk filename (UUID) is unknown
+    // Try to locate the file by scanning the uploads directory
+    if (!diskFilename || diskFilename.startsWith('http://') || diskFilename.startsWith('https://')) {
+      const found = await findLegacyDiskFile(item);
+      if (!found) {
+        return response.status(404).json({ message: 'Material file not found on server. Please re-upload this material.' });
+      }
+      diskFilename = found;
+      // Self-heal: update the record so future requests skip the scan
+      Material.updateOne({ _id: item._id }, { fileUrl: diskFilename }).catch(() => {});
+    }
+
+    const filePath = path.resolve(__dirname, '../uploads', diskFilename);
+    try {
+      await fs.access(filePath);
+    } catch {
+      // File listed in DB but missing from disk — try legacy scan as last resort
+      const found = await findLegacyDiskFile(item);
+      if (!found) {
+        return response.status(404).json({ message: 'Material file not found on server. Please re-upload this material.' });
+      }
+      diskFilename = found;
+      Material.updateOne({ _id: item._id }, { fileUrl: diskFilename }).catch(() => {});
+    }
+
+    const servePath = path.resolve(__dirname, '../uploads', diskFilename);
     response.type(item.mimeType);
-    response.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(item.fileName)}`);
-    const stream = require('fs').createReadStream(filePath);
+    response.set('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(item.fileName)}`);
+    const stream = require('fs').createReadStream(servePath);
     stream.on('error', (error) => {
       if (response.headersSent) response.destroy(error);
       else next(error);
@@ -139,6 +199,7 @@ async function download(request, response, next) {
     return next(error);
   }
 }
+
 
 async function update(request, response, next) {
   if (!mongoose.isValidObjectId(request.params.id)) return response.status(400).json({ message: 'Material id is invalid.' });
@@ -185,8 +246,13 @@ async function remove(request, response, next) {
       return response.status(403).json({ message: 'You can only delete your own materials.' });
     }
     await item.deleteOne();
-    const filename = path.basename(item.fileUrl);
-    await fs.unlink(path.resolve(__dirname, '../uploads', filename)).catch((error) => {
+    let diskFilename = item.fileUrl;
+    if (diskFilename.startsWith('http://') || diskFilename.startsWith('https://')) {
+      diskFilename = path.basename(new URL(diskFilename).pathname);
+    } else {
+      diskFilename = path.basename(diskFilename);
+    }
+    await fs.unlink(path.resolve(__dirname, '../uploads', diskFilename)).catch((error) => {
       if (error.code !== 'ENOENT') throw error;
     });
     return response.json({ message: 'Material deleted.' });

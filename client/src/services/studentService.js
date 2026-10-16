@@ -1,5 +1,14 @@
 import api from './api.js'
 
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '')
+
+// Convert a stored profilePhoto filename to a full URL
+export function getAvatarUrl(profilePhoto) {
+  if (!profilePhoto) return ''
+  if (profilePhoto.startsWith('http')) return profilePhoto
+  return `${API_BASE}/avatars/${profilePhoto}`
+}
+
 const byId = (path, id) => `${path}/${encodeURIComponent(id)}`
 const studentService = {
   getDashboard: () => api.get('/student/dashboard'),
@@ -28,6 +37,8 @@ const studentService = {
   listConversations: (params) => api.get('/private-messages/conversations', { params }),
   listMessages: (conversationId) => api.get(byId('/private-messages/conversations', conversationId)),
   sendMessage: (conversationId, data) => api.post(byId('/private-messages/conversations', conversationId), data),
+  uploadPhoto: (formData) => api.patch('/users/me/photo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 }
+
 
 export default studentService

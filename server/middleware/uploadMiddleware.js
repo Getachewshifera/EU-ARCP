@@ -5,7 +5,9 @@ const path = require('path');
 const multer = require('multer');
 
 const uploadDirectory = path.resolve(__dirname, '../uploads');
+const avatarDirectory = path.resolve(__dirname, '../uploads/avatars');
 fs.mkdirSync(uploadDirectory, { recursive: true });
+fs.mkdirSync(avatarDirectory, { recursive: true });
 
 const allowedTypes = new Map([
   ['.pdf', 'application/pdf'],
@@ -43,4 +45,28 @@ const uploadMaterial = multer({
   },
 });
 
-module.exports = { uploadMaterial, uploadDirectory };
+const avatarStorage = multer.diskStorage({
+  destination: (_request, _file, callback) => callback(null, avatarDirectory),
+  filename: (_request, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    callback(null, `${crypto.randomUUID()}${extension}`);
+  },
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_request, file, callback) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowed = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+    if (!allowed.has(ext)) {
+      const error = new Error('Only JPEG, PNG, or WebP images are allowed for profile photos.');
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
+module.exports = { uploadMaterial, uploadAvatar, uploadDirectory, avatarDirectory };
+

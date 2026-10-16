@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
+import PasswordInput from '../../components/common/PasswordInput.jsx'
+
 
 function formatCountdown(totalMs) {
   if (!Number.isFinite(totalMs) || totalMs <= 0) return '00:00'
@@ -124,14 +126,28 @@ function ActivateAccount() {
       </div>
 
       <form className="vstack gap-3" onSubmit={submit}>
-        <div>
-          <label className="form-label" htmlFor="new-password">New password</label>
-          <input autoComplete="new-password" className="form-control" disabled={submitting || expired} id="new-password" minLength="8" name="newPassword" onChange={update} required type="password" value={form.newPassword} />
-        </div>
-        <div>
-          <label className="form-label" htmlFor="confirm-password">Confirm new password</label>
-          <input autoComplete="new-password" className="form-control" disabled={submitting || expired} id="confirm-password" minLength="8" name="confirmPassword" onChange={update} required type="password" value={form.confirmPassword} />
-        </div>
+        <PasswordInput
+          autoComplete="new-password"
+          disabled={submitting || expired}
+          id="new-password"
+          label="New password"
+          minLength={8}
+          name="newPassword"
+          onChange={update}
+          required
+          value={form.newPassword}
+        />
+        <PasswordInput
+          autoComplete="new-password"
+          disabled={submitting || expired}
+          id="confirm-password"
+          label="Confirm new password"
+          minLength={8}
+          name="confirmPassword"
+          onChange={update}
+          required
+          value={form.confirmPassword}
+        />
 
         <button className="btn btn-primary btn-lg" disabled={submitting || expired} type="submit">
           {submitting ? 'Activating…' : expired ? 'Activation expired' : 'Activate account'}

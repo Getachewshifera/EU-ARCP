@@ -4,6 +4,22 @@ import Modal from '../common/Modal.jsx'
 import adminService from '../../services/adminService.js'
 import { displayValue, formatAdminDate } from './adminData.js'
 
+// Format a user object that may have firstName/lastName or a combined name
+function formatUser(user) {
+  if (!user) return '—'
+  if (typeof user === 'string') return user
+  const parts = [user.firstName, user.middleName, user.lastName].filter(Boolean)
+  if (parts.length) return parts.join(' ')
+  return user.name || user.email || '—'
+}
+
+// Format a category that may be a populated object or a plain string
+function formatCategory(cat) {
+  if (!cat) return '—'
+  if (typeof cat === 'string') return cat
+  return cat.name || cat.title || '—'
+}
+
 function MaterialViewDialog({ material, onClose }) {
   const [fileUrl, setFileUrl] = useState('')
   const [loading, setLoading] = useState(false)
@@ -49,9 +65,9 @@ function MaterialViewDialog({ material, onClose }) {
         <>
           <dl className="row mb-3">
             <dt className="col-sm-3">Category</dt>
-            <dd className="col-sm-9">{displayValue(material.category)}</dd>
+            <dd className="col-sm-9">{formatCategory(material.category)}</dd>
             <dt className="col-sm-3">Submitted by</dt>
-            <dd className="col-sm-9">{displayValue(material.uploadedBy || material.owner)}</dd>
+            <dd className="col-sm-9">{formatUser(material.uploader || material.uploadedBy || material.owner)}</dd>
             <dt className="col-sm-3">Status</dt>
             <dd className="col-sm-9">{displayValue(material.status)}</dd>
             <dt className="col-sm-3">Submitted</dt>

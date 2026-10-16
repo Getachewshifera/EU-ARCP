@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
+import PasswordInput from '../../components/common/PasswordInput.jsx'
+
 
 function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -52,14 +54,26 @@ function ResetPassword() {
             <label className="form-label" htmlFor="reset-email">Email address</label>
             <input autoComplete="email" className="form-control" id="reset-email" name="email" onChange={update} required type="email" value={form.email} />
           </div>
-          <div>
-            <label className="form-label" htmlFor="reset-password">New password</label>
-            <input autoComplete="new-password" className="form-control" id="reset-password" minLength="8" name="password" onChange={update} required type="password" value={form.password} />
-          </div>
-          <div>
-            <label className="form-label" htmlFor="reset-confirm-password">Confirm new password</label>
-            <input autoComplete="new-password" className="form-control" id="reset-confirm-password" minLength="8" name="confirmPassword" onChange={update} required type="password" value={form.confirmPassword} />
-          </div>
+          <PasswordInput
+            autoComplete="new-password"
+            id="reset-password"
+            label="New password"
+            minLength={8}
+            name="password"
+            onChange={update}
+            required
+            value={form.password}
+          />
+          <PasswordInput
+            autoComplete="new-password"
+            id="reset-confirm-password"
+            label="Confirm new password"
+            minLength={8}
+            name="confirmPassword"
+            onChange={update}
+            required
+            value={form.confirmPassword}
+          />
           <button className="btn btn-primary" disabled={submitting} type="submit">
             {submitting ? 'Updating…' : 'Update password'}
           </button>

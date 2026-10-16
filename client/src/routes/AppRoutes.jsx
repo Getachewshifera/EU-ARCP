@@ -1,5 +1,6 @@
 // Purpose: Declares the client URL routes and their page components.
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import PageTransition, { RouteProgressBar } from '../components/common/PageTransition.jsx'
 import AdminLayout from '../components/admin/AdminLayout.jsx'
 import DashboardLayout from '../components/layout/DashboardLayout.jsx'
 import AcademicStructure from '../pages/admin/AcademicStructure.jsx'
@@ -50,6 +51,10 @@ import StudentUploadMaterial from '../pages/student/UploadMaterial.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 import RoleRoute from './RoleRoute.jsx'
 
+function PublicPage({ children }) {
+  return <PageTransition>{children}</PageTransition>
+}
+
 function NotFound() {
   return (
     <main className="container py-5 text-center">
@@ -93,18 +98,20 @@ function LecturerArea() {
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <RouteProgressBar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/materials" element={<PublicMaterials />} />
-        <Route path="/materials/:id" element={<PublicMaterialDetails />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/activate" element={<ActivateAccount />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/registration-status" element={<RegistrationStatus />} />
+        <Route path="/" element={<PublicPage><Home /></PublicPage>} />
+        <Route path="/materials" element={<PublicPage><PublicMaterials /></PublicPage>} />
+        <Route path="/materials/:id" element={<PublicPage><PublicMaterialDetails /></PublicPage>} />
+        <Route path="/contact" element={<PublicPage><Contact /></PublicPage>} />
+        <Route path="/login" element={<PublicPage><Login /></PublicPage>} />
+        <Route path="/register" element={<PublicPage><Register /></PublicPage>} />
+        <Route path="/activate" element={<PublicPage><ActivateAccount /></PublicPage>} />
+        <Route path="/forgot-password" element={<PublicPage><ForgotPassword /></PublicPage>} />
+        <Route path="/verify-otp" element={<PublicPage><VerifyOTP /></PublicPage>} />
+        <Route path="/reset-password" element={<PublicPage><ResetPassword /></PublicPage>} />
+        <Route path="/registration-status" element={<PublicPage><RegistrationStatus /></PublicPage>} />
+
 
         <Route path="/admin" element={<AdminArea />}>
           <Route index element={<AdminDashboard />} />
@@ -150,7 +157,7 @@ function AppRoutes() {
           <Route path="password" element={<LecturerChangePassword />} />
         </Route>
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<PublicPage><NotFound /></PublicPage>} />
       </Routes>
     </BrowserRouter>
   )

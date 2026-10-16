@@ -18,6 +18,7 @@ const RegistrationRequest = require('../models/RegistrationRequest');
 const { validateUserUpdate } = require('../validators/userValidator');
 const { normalizeUserProfileUpdate } = require('../validators/userProfileValidator');
 const { hashPassword, verifyPassword } = require('../utils/password');
+const { avatarDirectory } = require('../middleware/uploadMiddleware');
 
 function safeUser(user) {
   const record = user.toObject ? user.toObject() : { ...user };
@@ -301,4 +302,36 @@ async function changePassword(request, response, next) {
   }
 }
 
-module.exports = { listUsers, updateUser, deleteUser, getCurrentUser, updateCurrentUser, changePassword };
+async function uploadProfilePhoto(request, response, next) {
+  if (!request.file) return response.status(400).json({ message: 'An image file is required.' });
+  try {
+    const user = await User.findById(request.user._id);
+    if (!user) return response.status(404).json({ message: 'User was not found.' });
+
+    // Delete old avatar file if present
+    if (user.profilePhoto) {
+      const oldFilename = path.basename(user.profilePhoto);
+      await fs.unlink(path.join(avatarDirectory, oldFilename)).catch((err) => {
+        if (err.code !== 'ENOENT') console.error('Could not remove old avatar:', err.message);
+      });
+    }
+
+    // Store only the filename; the URL is constructed client-side from the API base
+    user.profilePhoto = path.basename(request.file.path);
+    await user.save();
+    await user.populate([
+      { path: 'university', select: 'name' },
+      { path: 'college', select: 'name' },
+      { path: 'department', select: 'name' },
+      { path: 'program', select: 'name' },
+    ]);
+    return response.json({ user: safeUser(user) });
+  } catch (error) {
+    // Remove newly uploaded file on failure
+    await fs.unlink(request.file.path).catch(() => {});
+    return next(error);
+  }
+}
+
+module.exports = { listUsers, updateUser, deleteUser, getCurrentUser, updateCurrentUser, changePassword, uploadProfilePhoto };
+

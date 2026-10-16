@@ -1,5 +1,6 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
+import ThemeToggle from '../common/ThemeToggle.jsx'
 
 const navigation = [
   { label: 'Overview', to: '/admin', end: true },
@@ -19,6 +20,7 @@ const navigation = [
 function AdminLayout() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   function handleLogout() {
     logout()
@@ -54,10 +56,15 @@ function AdminLayout() {
       <main className="admin-main">
         <header className="admin-topbar">
           <span className="text-secondary">Academic Resource Collaboration Platform</span>
-          <span className="badge text-bg-primary">Admin</span>
+          <div className="d-flex align-items-center gap-2">
+            <ThemeToggle size="sm" />
+            <span className="badge text-bg-primary">Admin</span>
+          </div>
         </header>
         <div className="admin-content">
-          <Outlet />
+          <div key={location.pathname} className="page-transition-wrapper">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

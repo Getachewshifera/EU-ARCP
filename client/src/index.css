@@ -1,10 +1,25 @@
-/* Purpose: Global application styles and page defaults. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background-color: #f8f9fa;
+  overflow-x: clip;
+  background-color: var(--bs-body-bg, #f8f9fa);
+  color: var(--bs-body-color, #212529);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+#about,
+#features,
+#how-it-works {
+  scroll-margin-top: 5rem;
+}
+
+
 
 * {
   box-sizing: border-box;
@@ -325,3 +340,465 @@ a {
     padding: 1.25rem 1rem;
   }
 }
+
+/* ==========================================================================
+   Page Transitions: "Megareja Open" (መጋረጃ መክፈት — Curtain Opening Effect)
+   ========================================================================== */
+.megareja-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+}
+
+.megareja-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  will-change: transform;
+  overflow: hidden;
+  background: linear-gradient(135deg, #093c8a 0%, #0d6efd 50%, #082d6b 100%);
+}
+
+.megareja-panel-left {
+  left: 0;
+  transform-origin: left center;
+  box-shadow: 12px 0 30px rgba(0, 0, 0, 0.4);
+  animation: megarejaLeftOpen 0.46s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.megareja-panel-right {
+  right: 0;
+  transform-origin: right center;
+  box-shadow: -12px 0 30px rgba(0, 0, 0, 0.4);
+  animation: megarejaRightOpen 0.46s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Realistic vertical fabric drapery folds */
+.megareja-folds {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.12) 0px,
+    rgba(0, 0, 0, 0.15) 25px,
+    rgba(255, 255, 255, 0.08) 50px,
+    rgba(0, 0, 0, 0.22) 75px
+  );
+}
+
+.megareja-hem {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes megarejaLeftOpen {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-102%);
+  }
+}
+
+@keyframes megarejaRightOpen {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(102%);
+  }
+}
+
+/* Stage Reveal for Underlying Page */
+@keyframes megarejaStageReveal {
+  0% {
+    opacity: 0.88;
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.page-transition-wrapper {
+  animation: megarejaStageReveal 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Dark Mode Curtain Palette (Midnight Obsidian Velvet) */
+[data-bs-theme="dark"] .megareja-panel {
+  background: linear-gradient(135deg, #050811 0%, #0f172a 50%, #020617 100%);
+}
+
+[data-bs-theme="dark"] .megareja-panel-left {
+  box-shadow: 15px 0 40px rgba(0, 0, 0, 0.7);
+}
+
+[data-bs-theme="dark"] .megareja-panel-right {
+  box-shadow: -15px 0 40px rgba(0, 0, 0, 0.7);
+}
+
+[data-bs-theme="dark"] .megareja-folds {
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.06) 0px,
+    rgba(0, 0, 0, 0.3) 25px,
+    rgba(56, 189, 248, 0.03) 50px,
+    rgba(0, 0, 0, 0.4) 75px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .megareja-overlay {
+    display: none !important;
+  }
+  .page-transition-wrapper {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+
+
+
+/* Fixed Sticky Navigation Bar with Glassmorphism */
+.site-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+[data-bs-theme="dark"] .site-navbar {
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+
+/* Top Route Progress Bar */
+.route-progress-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  background: transparent;
+}
+
+@keyframes routeProgressAnim {
+  0% {
+    width: 0%;
+    opacity: 1;
+  }
+  60% {
+    width: 75%;
+    opacity: 1;
+  }
+  90% {
+    width: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0;
+  }
+}
+
+.route-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #0d6efd, #38bdf8, #60a5fa);
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+  animation: routeProgressAnim 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* ==========================================================================
+   Theme Toggle Component Styles
+   ========================================================================== */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  border-color: #dee2e6;
+  background-color: transparent;
+  color: #6c757d;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.theme-toggle-btn:hover {
+  color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.08);
+  border-color: #0d6efd;
+  transform: scale(1.05);
+}
+
+.theme-toggle-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-toggle-btn:hover .theme-toggle-icon-wrap {
+  transform: rotate(15deg);
+}
+
+.theme-toggle-text {
+  font-size: 0.825rem;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Dark Theme System & Component Tokens
+   ========================================================================== */
+[data-bs-theme="dark"] body {
+  background-color: #0b0f19;
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .bg-white {
+  background-color: #111827 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .border-bottom,
+[data-bs-theme="dark"] .border-top,
+[data-bs-theme="dark"] .border-end,
+[data-bs-theme="dark"] .border-start,
+[data-bs-theme="dark"] .border {
+  border-color: #1f293d !important;
+}
+
+[data-bs-theme="dark"] .text-secondary {
+  color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .card {
+  background-color: #111827;
+  border-color: #1f293d;
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .theme-toggle-btn {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+[data-bs-theme="dark"] .theme-toggle-btn:hover {
+  color: #38bdf8;
+  border-color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.12);
+}
+
+/* Dashboard & Admin Shell in Dark Mode */
+[data-bs-theme="dark"] .dashboard-sidebar,
+[data-bs-theme="dark"] .dashboard-header,
+[data-bs-theme="dark"] .admin-sidebar,
+[data-bs-theme="dark"] .admin-topbar {
+  background-color: #0f172a;
+  border-color: #1e293b;
+}
+
+[data-bs-theme="dark"] .dashboard-nav .nav-link,
+[data-bs-theme="dark"] .admin-nav .nav-link,
+[data-bs-theme="dark"] .admin-sidebar-footer .nav-link {
+  color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .dashboard-nav .nav-link:hover,
+[data-bs-theme="dark"] .admin-nav .nav-link:hover,
+[data-bs-theme="dark"] .admin-sidebar-footer .nav-link:hover {
+  color: #60a5fa;
+  background-color: #1e293b;
+}
+
+[data-bs-theme="dark"] .dashboard-nav .nav-link.active,
+[data-bs-theme="dark"] .admin-nav .nav-link.active {
+  color: #38bdf8;
+  background-color: rgba(14, 165, 233, 0.15);
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .dashboard-user,
+[data-bs-theme="dark"] .admin-sidebar-footer {
+  border-color: #1e293b;
+}
+
+/* Hero Section in Dark Mode */
+[data-bs-theme="dark"] .home-hero {
+  background:
+    radial-gradient(ellipse at 80% 20%, rgba(56, 189, 248, 0.12), transparent 45%),
+    linear-gradient(135deg, #0b0f19, #0f172a 65%);
+}
+
+[data-bs-theme="dark"] .home-highlight {
+  background: linear-gradient(145deg, #111827, #1e293b);
+  border: 1px solid #1e293b !important;
+}
+
+[data-bs-theme="dark"] .home-highlight-decoration {
+  color: rgba(56, 189, 248, 0.08);
+}
+
+[data-bs-theme="dark"] .feature-number {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+[data-bs-theme="dark"] .modal-content {
+  background-color: #111827;
+  border-color: #1f293d;
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .table {
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+  --bs-table-border-color: #1f293d;
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+  background-color: #0b0f19;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+  background-color: #0b0f19;
+  border-color: #38bdf8;
+  color: #f1f5f9;
+  box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+}
+
+/* ==========================================================================
+   Homepage Components & Cards
+   ========================================================================== */
+.home-hero-image-wrapper {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-hero-image-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.home-pillar-card,
+.home-feature-card,
+.home-step-card,
+.home-about-highlight-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 0.85rem;
+}
+
+.home-pillar-card:hover,
+.home-feature-card:hover,
+.home-step-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.08) !important;
+}
+
+.home-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+}
+
+.home-cta-card {
+  background: linear-gradient(135deg, #0d6efd 0%, #1d4ed8 50%, #1e40af 100%);
+  box-shadow: 0 1rem 3rem rgba(13, 110, 253, 0.25);
+}
+
+[data-bs-theme="dark"] .home-cta-card {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #0f172a 100%);
+  border: 1px solid #1e293b;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.5);
+}
+
+[data-bs-theme="dark"] .bg-body-tertiary {
+  background-color: #0d131f !important;
+}
+
+[data-bs-theme="dark"] .home-hero-image-wrapper {
+  border-color: #1e293b !important;
+}
+
+/* ==========================================================================
+   Password Input with Show/Hide Eye Toggle
+   ========================================================================== */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-control {
+  padding-right: 2.75rem !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0.35rem 0.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  z-index: 5;
+  line-height: 1;
+}
+
+.password-toggle-btn:hover {
+  color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.08);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 1px;
+}
+
+[data-bs-theme="dark"] .password-toggle-btn {
+  color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .password-toggle-btn:hover {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.12);
+}
+
+
+

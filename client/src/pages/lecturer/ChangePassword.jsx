@@ -2,6 +2,7 @@ import { useState } from 'react'
 import lecturerService from '../../services/lecturerService.js'
 import { PageHeader } from '../../components/portal/lecturer/LecturerUI.jsx'
 import { errorMessage } from '../../components/portal/lecturer/lecturerUtils.js'
+import PasswordInput from '../../components/common/PasswordInput.jsx'
 
 function ChangePassword() {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -32,12 +33,42 @@ function ChangePassword() {
       <form className="card" onSubmit={submit}>
         <div className="card-body">
           <div className="row g-3">
-            <div className="col-md-8"><label className="form-label" htmlFor="current-password">Current password</label><input className="form-control" id="current-password" type="password" autoComplete="current-password" required value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} /></div>
-            <div className="col-md-8"><label className="form-label" htmlFor="new-password">New password</label><input className="form-control" id="new-password" type="password" autoComplete="new-password" minLength="8" required value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} /><div className="form-text">Use at least 8 characters.</div></div>
-            <div className="col-md-8"><label className="form-label" htmlFor="confirm-password">Confirm new password</label><input className="form-control" id="confirm-password" type="password" autoComplete="new-password" minLength="8" required value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} /></div>
+            <PasswordInput
+              autoComplete="current-password"
+              className="col-md-8"
+              id="current-password"
+              label="Current password"
+              name="currentPassword"
+              onChange={(event) => setForm({ ...form, currentPassword: event.target.value })}
+              required
+              value={form.currentPassword}
+            />
+            <PasswordInput
+              autoComplete="new-password"
+              className="col-md-8"
+              hint="Use at least 8 characters."
+              id="new-password"
+              label="New password"
+              minLength={8}
+              name="newPassword"
+              onChange={(event) => setForm({ ...form, newPassword: event.target.value })}
+              required
+              value={form.newPassword}
+            />
+            <PasswordInput
+              autoComplete="new-password"
+              className="col-md-8"
+              id="confirm-password"
+              label="Confirm new password"
+              minLength={8}
+              name="confirmPassword"
+              onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
+              required
+              value={form.confirmPassword}
+            />
           </div>
         </div>
-        <div className="card-footer bg-white"><button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Updating…' : 'Update password'}</button></div>
+        <div className="card-footer bg-body"><button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Updating…' : 'Update password'}</button></div>
       </form>
     </section>
   )

@@ -1,7 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import studentService from '../../services/studentService.js'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import studentService, { getAvatarUrl } from '../../services/studentService.js'
 import { asEntity, getErrorMessage } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState, Notice } from '../../components/portal/student/StudentUi.jsx'
+
+function Initials({ name }) {
+  const parts = (name || '').trim().split(/\s+/)
+  const letters = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : (parts[0]?.[0] || '?').toUpperCase()
+  return (
+    <div style={{
+      width: 88, height: 88, borderRadius: '50%',
+      background: 'linear-gradient(135deg,#667eea,#764ba2)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 30, fontWeight: 700, color: '#fff', userSelect: 'none', flexShrink: 0,
+    }}>{letters}</div>
+  )
+}
 
 const fields = [
   ['firstName', 'First name', 'text'],
@@ -52,6 +67,9 @@ export default function Profile() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const photoInputRef = useRef(null)
 
   const loadProfile = useCallback(async () => {
     try {
@@ -73,6 +91,7 @@ export default function Profile() {
       setColleges(collegeItems)
       setDepartments(departmentItems)
       setPrograms(programItems)
+      setPhotoPreview(getAvatarUrl(result.profilePhoto))
       setError('')
     } catch (requestError) {
       setError(getErrorMessage(requestError))
@@ -84,6 +103,32 @@ export default function Profile() {
     const timer = window.setTimeout(loadProfile, 0)
     return () => window.clearTimeout(timer)
   }, [loadProfile])
+  async function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const localUrl = URL.createObjectURL(file)
+    setPhotoPreview(localUrl)
+    setPhotoUploading(true)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('photo', file)
+      const res = await studentService.uploadPhoto(fd)
+      const updated = res.data?.user
+      if (updated) {
+        setProfile(updated)
+        setPhotoPreview(getAvatarUrl(updated.profilePhoto))
+      }
+      setNotice('Profile photo updated.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not upload photo. Use JPEG/PNG/WebP under 5 MB.'))
+      setPhotoPreview(getAvatarUrl(profile.profilePhoto))
+    } finally {
+      setPhotoUploading(false)
+      if (photoInputRef.current) photoInputRef.current.value = ''
+    }
+  }
+
   const retryProfile = () => {
     setLoading(true)
     loadProfile()
@@ -198,6 +243,27 @@ export default function Profile() {
           <Notice>{notice}</Notice>
           <form className="card shadow-sm" onSubmit={submit}>
             <div className="card-body">
+              {/* Profile photo */}
+              <div className="d-flex align-items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--bs-border-color,#dee2e6)' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  {photoPreview
+                    ? <img src={photoPreview} alt="Profile" style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--bs-primary,#0d6efd)', display: 'block' }} />
+                    : <Initials name={[profile.firstName, profile.middleName].filter(Boolean).join(' ') || profile.name || ''} />}
+                  <button type="button" title="Change photo" disabled={photoUploading} onClick={() => photoInputRef.current?.click()}
+                    style={{ position: 'absolute', bottom: 2, right: 2, width: 28, height: 28, borderRadius: '50%', background: 'var(--bs-primary,#0d6efd)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                    {photoUploading
+                      ? <span className="spinner-border spinner-border-sm text-white" style={{ width: 13, height: 13, borderWidth: 2 }} />
+                      : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>}
+                  </button>
+                  <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePhotoChange} />
+                </div>
+                <div>
+                  <div className="fw-semibold">{[profile.firstName, profile.middleName].filter(Boolean).join(' ') || profile.name || 'Your Name'}</div>
+                  <div className="text-secondary small text-capitalize">{profile.role || 'Student'}</div>
+                  <div className="text-secondary" style={{ fontSize: '0.75rem', marginTop: 2 }}>Click the camera to update photo</div>
+                </div>
+              </div>
+
               <div className="row g-3">
                 {[
                   ['studentId', 'Student ID', profile.studentId],
