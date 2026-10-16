@@ -35,6 +35,10 @@ const adminService = {
     return api.patch(`/users/${encodeURIComponent(id)}`, updates)
   },
 
+  deleteUser(id) {
+    return api.delete(`/users/${encodeURIComponent(id)}`)
+  },
+
   getRegistrationRequests(params) {
     return api.get('/registrations', { params })
   },
@@ -47,12 +51,24 @@ const adminService = {
     return api.get('/materials', { params })
   },
 
+  getMaterialFile(id) {
+    return api.get(`/materials/${encodeURIComponent(id)}/file`, { responseType: 'blob' })
+  },
+
   updateMaterial(id, updates) {
     return api.patch(`/materials/${encodeURIComponent(id)}`, updates)
   },
 
   getReports(params) {
     return api.get('/reports', { params })
+  },
+
+  getContactMessages(params) {
+    return api.get('/admin/contact-messages', { params })
+  },
+
+  updateContactMessage(id, updates) {
+    return api.patch(`/admin/contact-messages/${encodeURIComponent(id)}`, updates)
   },
 
   updateReport(id, updates) {

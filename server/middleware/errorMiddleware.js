@@ -11,7 +11,7 @@ function errorMiddleware(error, _request, response, _next) {
   const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 600
     ? error.status
     : 500;
-  if (status >= 500) console.error('API request failed:', error);
+  if (status >= 500) console.error('API request failed.');
   return response.status(status).json({
     message: status === 500 && process.env.NODE_ENV === 'production'
       ? 'An unexpected server error occurred.'

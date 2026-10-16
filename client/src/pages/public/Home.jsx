@@ -1,6 +1,7 @@
 // Purpose: Public landing page.
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import Navbar from '../../components/layout/Navbar.jsx'
+import useAuth from '../../hooks/useAuth.js'
 
 const features = [
   ['Find resources', 'Search learning materials shared by your academic community.'],
@@ -9,6 +10,12 @@ const features = [
 ]
 
 function Home() {
+  const { user, isAuthenticated } = useAuth()
+  if (isAuthenticated) {
+    const role = ['admin', 'lecturer', 'student'].includes(user?.role) ? user.role : 'student'
+    return <Navigate to={`/${role}`} replace />
+  }
+
   return (
     <>
       <Navbar />
@@ -40,7 +47,7 @@ function Home() {
             </div>
           </div>
         </section>
-        <section className="container py-5">
+        <section className="container py-5" id="about">
           <div className="text-center mb-4">
             <h2 className="h2">A better way to collaborate</h2>
             <p className="text-secondary">Everything you need to find and share academic knowledge.</p>

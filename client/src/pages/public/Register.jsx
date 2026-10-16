@@ -336,13 +336,16 @@ function Register() {
       const data = response.data?.data ?? response.data ?? {}
       const email = data.email || form.email
 
-      if (data.requiresVerification || data.otpSent) {
-        navigate(`/verify-otp?email=${encodeURIComponent(email)}&purpose=registration`)
-        return
-      }
-
-      if (isStudent && data.status === 'pending') {
-        navigate(`/registration-status?email=${encodeURIComponent(email)}`)
+      if (data.username && data.temporaryPassword) {
+        navigate('/activate', {
+          state: {
+            username: data.username,
+            email,
+            temporaryPassword: data.temporaryPassword,
+            expiresAt: data.activationExpiresAt || data.expiresAt,
+            emailDeliveryFailed: Boolean(data.emailDeliveryFailed),
+          },
+        })
         return
       }
 

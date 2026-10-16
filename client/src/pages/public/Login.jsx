@@ -8,6 +8,7 @@ function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const successMessage = location.state?.message || ''
   const [form, setForm] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -24,7 +25,8 @@ function Login() {
       const user = await login(form)
       const role = String(user.role || '').toLowerCase()
       const destination = location.state?.from?.pathname
-      navigate(destination || `/${['admin', 'lecturer', 'student'].includes(role) ? role : 'student'}`, { replace: true })
+      const dashboard = `/${['admin', 'lecturer', 'student'].includes(role) ? role : 'student'}`
+      navigate(destination && destination !== '/' ? destination : dashboard, { replace: true })
     } catch (requestError) {
       setError(requestError.response?.data?.message || requestError.message || 'Unable to sign in.')
     } finally {
@@ -34,6 +36,7 @@ function Login() {
 
   return (
     <AuthPage description="Sign in to continue to your academic workspace." title="Welcome back">
+      {successMessage && <div className="alert alert-success" role="status">{successMessage}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <form className="vstack gap-3" onSubmit={submit}>
         <div>

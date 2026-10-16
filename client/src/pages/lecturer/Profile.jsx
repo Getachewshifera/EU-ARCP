@@ -7,9 +7,13 @@ const fields = [
   ['name', 'Full name', 'text'],
   ['email', 'Email address', 'email'],
   ['phone', 'Phone number', 'tel'],
-  ['department', 'Department', 'text'],
   ['bio', 'About', 'textarea'],
 ]
+
+function referenceName(value) {
+  if (value && typeof value === 'object') return value.name || ''
+  return typeof value === 'string' && !/^[a-f\d]{24}$/i.test(value) ? value : ''
+}
 
 function LecturerProfile() {
   const [form, setForm] = useState({})
@@ -36,8 +40,12 @@ function LecturerProfile() {
   async function submit(event) {
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
     try {
-      const updated = unwrap(await lecturerService.updateProfile(form))
-      if (updated && typeof updated === 'object') setForm(updated.user ?? updated.profile ?? updated)
+      const editable = Object.fromEntries(fields.map(([name]) => [name, form[name] ?? '']))
+      const updated = unwrap(await lecturerService.updateProfile(editable))
+      if (updated && typeof updated === 'object') {
+        const next = updated.user ?? updated.profile ?? updated
+        setForm((current) => ({ ...current, ...next, department: current.department }))
+      }
       setNotice('Your profile has been updated.')
     } catch (requestError) { setError(errorMessage(requestError, 'Unable to update your profile.')) }
     finally { setSaving(false) }
@@ -53,6 +61,14 @@ function LecturerProfile() {
         <form className="card" onSubmit={submit}>
           <div className="card-body">
             <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label" htmlFor="profile-university">University</label>
+                <input className="form-control" id="profile-university" readOnly value={referenceName(form.university) || 'Not provided'} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label" htmlFor="profile-department">Department</label>
+                <input className="form-control" id="profile-department" readOnly value={referenceName(form.department) || 'Not provided'} />
+              </div>
               {fields.map(([name, label, type]) => <div className={type === 'textarea' ? 'col-12' : 'col-md-6'} key={name}>
                 <label className="form-label" htmlFor={`profile-${name}`}>{label}</label>
                 {type === 'textarea'

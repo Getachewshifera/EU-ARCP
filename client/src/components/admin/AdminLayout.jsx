@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import useAuth from '../../hooks/useAuth.js'
 
 const navigation = [
   { label: 'Overview', to: '/admin', end: true },
@@ -10,11 +11,20 @@ const navigation = [
   { label: 'Materials', to: '/admin/materials' },
   { label: 'Groups', to: '/admin/groups' },
   { label: 'Reports', to: '/admin/reports' },
+  { label: 'Contact messages', to: '/admin/contact-messages' },
   { label: 'Activity logs', to: '/admin/activity' },
   { label: 'System settings', to: '/admin/settings' },
 ]
 
 function AdminLayout() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -38,7 +48,7 @@ function AdminLayout() {
           ))}
         </nav>
         <div className="admin-sidebar-footer">
-          <NavLink className="nav-link" to="/">Back to home</NavLink>
+          <button className="btn btn-outline-secondary btn-sm w-100 mt-2" type="button" onClick={handleLogout}>Sign out</button>
         </div>
       </aside>
       <main className="admin-main">

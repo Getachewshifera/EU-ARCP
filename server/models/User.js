@@ -36,6 +36,8 @@ const userSchema = new mongoose.Schema({
   otpHash: { type: String, select: false },
   otpPurpose: { type: String, enum: ['registration', 'password-reset'] },
   otpExpiresAt: { type: Date, select: false },
+  otpAttempts: { type: Number, default: 0 },
+  otpLockedUntil: { type: Date, default: null },
   resetTokenHash: { type: String, select: false },
   resetTokenExpiresAt: { type: Date, select: false },
 }, { timestamps: true });

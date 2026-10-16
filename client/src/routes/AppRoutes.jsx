@@ -6,6 +6,7 @@ import AcademicStructure from '../pages/admin/AcademicStructure.jsx'
 import ActivityLogs from '../pages/admin/ActivityLogs.jsx'
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx'
 import Categories from '../pages/admin/Categories.jsx'
+import ContactMessages from '../pages/admin/ContactMessages.jsx'
 import Groups from '../pages/admin/Groups.jsx'
 import Materials from '../pages/admin/Materials.jsx'
 import RegistrationRequests from '../pages/admin/RegistrationRequests.jsx'
@@ -24,8 +25,10 @@ import LecturerNotifications from '../pages/lecturer/Notifications.jsx'
 import LecturerPrivateMessages from '../pages/lecturer/PrivateMessages.jsx'
 import LecturerProfile from '../pages/lecturer/Profile.jsx'
 import LecturerUploadMaterial from '../pages/lecturer/UploadMaterial.jsx'
+import ActivateAccount from '../pages/public/ActivateAccount.jsx'
 import ForgotPassword from '../pages/public/ForgotPassword.jsx'
 import Home from '../pages/public/Home.jsx'
+import Contact from '../pages/public/Contact.jsx'
 import Login from '../pages/public/Login.jsx'
 import PublicMaterialDetails from '../pages/public/MaterialDetails.jsx'
 import PublicMaterials from '../pages/public/Materials.jsx'
@@ -94,8 +97,10 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/materials" element={<PublicMaterials />} />
         <Route path="/materials/:id" element={<PublicMaterialDetails />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/activate" element={<ActivateAccount />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -112,6 +117,7 @@ function AppRoutes() {
           <Route path="materials" element={<Materials />} />
           <Route path="groups" element={<Groups />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="contact-messages" element={<ContactMessages />} />
           <Route path="activity" element={<ActivityLogs />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>

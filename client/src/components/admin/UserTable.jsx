@@ -2,7 +2,7 @@
 import AdminDataTable from './AdminDataTable.jsx'
 import { displayValue } from './adminData.js'
 
-function UserTable({ users = [], onRoleChange, onStatusChange, busyId = '' }) {
+function UserTable({ users = [], onRoleChange, onStatusChange, onDelete, currentUserId = '', busyId = '' }) {
   const columns = [
     {
       key: 'user',
@@ -61,6 +61,17 @@ function UserTable({ users = [], onRoleChange, onStatusChange, busyId = '' }) {
                 type="button"
               >
                 {busyId === id ? 'Saving…' : active ? 'Suspend' : 'Activate'}
+              </button>
+            )}
+            {onDelete && (
+              <button
+                className="btn btn-sm btn-danger"
+                disabled={busyId === id || id === currentUserId}
+                onClick={() => onDelete(user)}
+                title={id === currentUserId ? 'You cannot delete your own account.' : undefined}
+                type="button"
+              >
+                Delete
               </button>
             )}
           </div>

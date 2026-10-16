@@ -29,7 +29,9 @@ function Navbar() {
         </button>
         <div className={`navbar-collapse${expanded ? ' d-block' : ' d-none'} d-lg-flex`} id="site-navigation">
           <div className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-            <Link className="nav-link" to="/materials">Resources</Link>
+            <Link className="nav-link" to="/">Home</Link>
+            <Link className="nav-link" to="/#about">About</Link>
+            <Link className="nav-link" to="/contact">Contact</Link>
             {isAuthenticated ? (
               <>
                 <Link className="nav-link" to={`/${user?.role || 'student'}`}>Dashboard</Link>

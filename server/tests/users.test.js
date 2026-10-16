@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { signToken, verifyToken } = require('../utils/token');
 const { validateUserUpdate } = require('../validators/userValidator');
+const { normalizeUserProfileUpdate } = require('../validators/userProfileValidator');
 
 const secret = 'test-secret-that-is-at-least-thirty-two-characters';
 
@@ -26,4 +27,28 @@ test('user updates accept only supported role and status fields', () => {
   assert.match(validateUserUpdate({ role: 'owner' }).error, /Role must be/);
   assert.match(validateUserUpdate({ password: 'new-password' }).error, /Only role and status/);
   assert.match(validateUserUpdate({}).error, /Only role and status/);
+});
+
+test('profile updates normalize form aliases and ignore immutable IDs and usernames', () => {
+  assert.deepEqual(normalizeUserProfileUpdate({
+    universityId: { _id: 'university-id', name: 'University' },
+    departmentId: 'department-id',
+    email: 'student@example.com',
+    username: 'unchangeable',
+    studentId: 'unchangeable-id',
+    _id: 'record-id',
+    role: 'admin',
+    name: 'Read-only derived name',
+  }), {
+    value: {
+      university: 'university-id',
+      department: 'department-id',
+      email: 'student@example.com',
+    },
+  });
+});
+
+test('profile updates reject unsupported account fields', () => {
+  assert.match(normalizeUserProfileUpdate({ unknownProfileField: 'value' }).error, /Only profile fields/i);
+  assert.match(normalizeUserProfileUpdate({ username: 'student' }).error, /Provide profile fields/i);
 });

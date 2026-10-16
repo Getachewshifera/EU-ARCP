@@ -2,7 +2,7 @@
 import AdminDataTable from './AdminDataTable.jsx'
 import { displayValue, formatAdminDate } from './adminData.js'
 
-function MaterialTable({ materials = [], onReview, busyId = '' }) {
+function MaterialTable({ materials = [], onReview, onView, busyId = '' }) {
   const columns = [
     { key: 'title', label: 'Title' },
     { key: 'category', label: 'Category', render: (material) => displayValue(material.category) },
@@ -18,6 +18,13 @@ function MaterialTable({ materials = [], onReview, busyId = '' }) {
         const pending = !['approved', 'published'].includes(String(material.status).toLowerCase())
         return (
           <div className="d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-outline-primary"
+              onClick={() => onView(material)}
+              type="button"
+            >
+              View
+            </button>
             {pending && (
               <button
                 className="btn btn-sm btn-success"

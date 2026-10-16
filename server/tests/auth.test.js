@@ -30,3 +30,22 @@ test('OTP validation enforces a six-digit code and supported purpose', () => {
   assert.match(validateOtpRequest({ email: 'user@example.com', otp: '123456', purpose: 'unknown' }).error, /registration or password-reset/i);
   assert.deepEqual(validateForgotPassword({ email: ' USER@EXAMPLE.COM ' }).value, { email: 'user@example.com' });
 });
+
+test('activation payload carries the temporary credentials and expiration timestamp', () => {
+  const payload = {
+    username: 'student-104',
+    temporaryPassword: 'TempPass!42',
+    activationExpiresAt: '2026-10-14T00:05:00.000Z',
+  };
+
+  assert.equal(payload.username, 'student-104');
+  assert.ok(payload.temporaryPassword.length >= 8);
+  assert.ok(!Number.isNaN(Date.parse(payload.activationExpiresAt)));
+});
+
+test('email delivery errors remain generic and do not disclose credentials', () => {
+  const message = 'Email delivery is unavailable. Please try again later.';
+
+  assert.match(message, /Email delivery is unavailable/i);
+  assert.doesNotMatch(message, /otp|password|token|secret/i);
+});

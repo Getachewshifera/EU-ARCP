@@ -11,6 +11,9 @@ const authService = {
   registerLecturer(details) {
     return api.post('/auth/register/lecturer', details)
   },
+  activateAccount(data) {
+    return api.post('/auth/activate', data)
+  },
   verifyOtp(data) {
     return api.post('/auth/verify-otp', data)
   },

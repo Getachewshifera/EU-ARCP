@@ -16,6 +16,7 @@ const { signToken } = require('../utils/token');
 
 const OTP_LIFETIME_MS = 10 * 60 * 1000;
 const ACTIVATION_WINDOW_MS = 5 * 60 * 1000;
+const MAX_OTP_ATTEMPTS = 5;
 
 function normalizeEmail(email) {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -36,6 +37,8 @@ async function saveAndSendOtp(user, purpose) {
   user.otpHash = hashSecret(otp);
   user.otpPurpose = purpose;
   user.otpExpiresAt = new Date(Date.now() + OTP_LIFETIME_MS);
+  user.otpAttempts = 0;
+  user.otpLockedUntil = null;
   await user.save();
   try {
     await sendOtpEmail(user.email, otp, purpose);
@@ -43,8 +46,10 @@ async function saveAndSendOtp(user, purpose) {
     user.otpHash = undefined;
     user.otpPurpose = undefined;
     user.otpExpiresAt = undefined;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
     await user.save();
-    throw error;
+    throw new Error('Email delivery is unavailable. Please try again later.');
   }
 }
 
@@ -189,13 +194,25 @@ async function register(request, response, next) {
         status: 'submitted',
       });
 
-      await sendActivationEmail(email, generatedUsername, temporaryPassword, role);
+      let emailDeliveryFailed = false;
+      try {
+        await sendActivationEmail(email, generatedUsername, temporaryPassword, role);
+      } catch (emailError) {
+        emailDeliveryFailed = true;
+      }
+
       return response.status(201).json({
         username: generatedUsername,
         email,
+        temporaryPassword,
+        activationExpiresAt: user.activationExpiresAt.toISOString(),
+        expiresAt: user.activationExpiresAt.toISOString(),
         status: 'PENDING_ACTIVATION',
         requiresPasswordChange: true,
-        message: 'Registration submitted successfully. Use your temporary username and password to activate your account within five minutes.',
+        emailDeliveryFailed,
+        message: emailDeliveryFailed
+          ? 'Registration submitted successfully. Email delivery is unavailable, but your activation credentials are shown below.'
+          : 'Registration submitted successfully. Use your temporary username and password to activate your account within five minutes.',
         registrationId: String(registrationRecord._id),
       });
     } catch (error) {
@@ -328,13 +345,38 @@ async function verifyOtp(request, response, next) {
       return response.status(400).json({ message: 'A valid email, six-digit code, and purpose are required.' });
     }
     const user = await User.findOne({ email }).select('+otpHash +otpExpiresAt');
-    if (!user || user.otpPurpose !== purpose || !user.otpHash || !user.otpExpiresAt
-      || user.otpExpiresAt <= new Date() || hashSecret(otp) !== user.otpHash) {
+    if (!user) {
       return response.status(400).json({ message: 'The verification code is invalid or expired.' });
     }
+    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
+      return response.status(429).json({ message: 'Too many invalid verification attempts. Request a new code.' });
+    }
+    if (user.otpPurpose !== purpose || !user.otpHash || !user.otpExpiresAt || user.otpExpiresAt <= new Date()) {
+      user.otpHash = undefined;
+      user.otpPurpose = undefined;
+      user.otpExpiresAt = undefined;
+      user.otpAttempts = 0;
+      user.otpLockedUntil = null;
+      await user.save();
+      return response.status(400).json({ message: 'The verification code is invalid or expired.' });
+    }
+    if (hashSecret(otp) !== user.otpHash) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
+        user.otpHash = undefined;
+        user.otpPurpose = undefined;
+        user.otpExpiresAt = undefined;
+        user.otpLockedUntil = new Date(Date.now() + 10 * 60 * 1000);
+      }
+      await user.save();
+      return response.status(400).json({ message: 'The verification code is invalid or expired.' });
+    }
+
     user.otpHash = undefined;
     user.otpPurpose = undefined;
     user.otpExpiresAt = undefined;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
     if (purpose === 'registration') {
       user.emailVerified = true;
       await user.save();

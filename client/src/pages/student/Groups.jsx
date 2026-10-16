@@ -10,6 +10,10 @@ export default function Groups() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [createForm, setCreateForm] = useState({ name: '', description: '', course: '', isPrivate: false })
 
   const loadGroups = useCallback(async () => {
     try {
@@ -37,9 +41,44 @@ export default function Groups() {
     else setQuery(nextQuery)
   }
 
+  async function createGroup(event) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      await studentService.createGroup(createForm)
+      setCreateForm({ name: '', description: '', course: '', isPrivate: false })
+      setCreating(false)
+      setNotice('Your group has been created.')
+      setLoading(true)
+      await loadGroups()
+    } catch (requestError) {
+      setError(getErrorMessage(requestError))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <main className="container py-4">
-      <PageHeader title="Study groups" description="Discover groups for your courses and interests." />
+      <PageHeader title="Study groups" description="Discover groups for your courses and interests."
+        actions={<button type="button" className="btn btn-primary" onClick={() => setCreating(!creating)}>{creating ? 'Cancel' : 'Create group'}</button>} />
+      {notice && <div className="alert alert-success" role="status">{notice}</div>}
+      {creating && <form className="card mb-4" onSubmit={createGroup}>
+        <div className="card-body">
+          <h2 className="h5">New group</h2>
+          <div className="mb-3"><label className="form-label" htmlFor="new-group-name">Group name</label>
+            <input className="form-control" id="new-group-name" maxLength="160" required value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} /></div>
+          <div className="mb-3"><label className="form-label" htmlFor="new-group-course">Course</label>
+            <input className="form-control" id="new-group-course" maxLength="160" value={createForm.course} onChange={(event) => setCreateForm({ ...createForm, course: event.target.value })} /></div>
+          <div className="mb-3"><label className="form-label" htmlFor="new-group-description">Description</label>
+            <textarea className="form-control" id="new-group-description" maxLength="2000" rows="3" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} /></div>
+          <div className="form-check mb-3"><input className="form-check-input" id="new-group-private" type="checkbox" checked={createForm.isPrivate} onChange={(event) => setCreateForm({ ...createForm, isPrivate: event.target.checked })} />
+            <label className="form-check-label" htmlFor="new-group-private">Private group</label></div>
+          <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create group'}</button>
+        </div>
+      </form>}
       <form className="input-group mb-4" role="search" onSubmit={submitSearch}>
         <label className="visually-hidden" htmlFor="group-search">Search groups</label>
         <input id="group-search" className="form-control" type="search" placeholder="Search by group or course" value={search} onChange={(event) => setSearch(event.target.value)} />

@@ -15,9 +15,9 @@ From the project root, install all workspace dependencies:
 npm install
 ```
 
-The server reads its configuration from `server/.env`. Copy `server/.env.example` to `server/.env`; the default `MONGODB_URI` expects MongoDB on `127.0.0.1:27017`. Set `JWT_SECRET` to a private random value with at least 32 characters; generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS` for email delivery. In development without SMTP, verification codes are written to the API terminal; production requires SMTP. Set `PUBLIC_API_URL` to the API's public base URL for material downloads. The API exits if MongoDB is missing, invalid, or unreachable.
+The server reads its configuration from `server/.env`. Copy `server/.env.example` to `server/.env`; the default `MONGODB_URI` expects MongoDB on `127.0.0.1:27017`. Set `JWT_SECRET` to a private random value with at least 32 characters; generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS` for email delivery. In development without SMTP, verification codes are written to the API terminal; production requires SMTP. Set `PUBLIC_API_URL` to the API's public base URL for material downloads. The API exits if MongoDB is missing, invalid, or unreachable. Never commit real credentials to the repository; keep local secrets in `server/.env` only.
 
-To create the first administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` (at least 12 characters) in `server/.env`, then run `npm run seed:admin --workspace server`. Keep these values private.
+To create the first administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` (8–200 characters) in `server/.env`, then run `npm run seed:admin --workspace server`. Optionally set `ADMIN_USERNAME`; it defaults to the email address before `@`. Keep these values private and use a unique password instead of a shared default.
 
 Copy `client/.env.example` to `client/.env` only when you need to override client settings.
 
@@ -40,7 +40,7 @@ npm run build
 
 The client includes an administration workspace at `/admin`, with pages for the dashboard, users, registration requests, universities, academic structure, categories, materials, groups, reports, activity logs, and system settings. Set `VITE_API_URL` to the API base URL; it defaults to `http://localhost:5000/api`.
 
-All administrative routes require an unexpired HS256 bearer token for an active, approved admin account. Admin APIs include `/admin/dashboard`, `/admin/activity-logs`, `/users`, `/registrations`, `/universities`, `/academic/*`, `/categories`, `/materials`, `/groups`, `/reports`, and `/settings`. User role/status updates are constrained; the last active admin cannot be demoted or suspended. Administrative frontend routes are not an authorization boundary—the API enforces access.
+All administrative routes require an unexpired HS256 bearer token for an active, approved admin account. Admin APIs include `/admin/dashboard`, `/admin/activity-logs`, `/users`, `/registrations`, `/universities`, `/academic/*`, `/categories`, `/materials`, `/groups`, `/reports`, and `/settings`. User role/status updates are constrained; admins can permanently delete accounts, but cannot delete themselves or the last active administrator. Deleting an account also removes that user's uploaded materials and files, messages, notifications, and owned groups. Administrative frontend routes are not an authorization boundary—the API enforces access.
 
 ## Server API
 

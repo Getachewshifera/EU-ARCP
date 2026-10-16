@@ -5,6 +5,7 @@ const adminMiddleware = require('../middleware/adminMiddleware');
 const {
   listUsers,
   updateUser,
+  deleteUser,
   getCurrentUser,
   updateCurrentUser,
   changePassword,
@@ -18,5 +19,6 @@ router.patch('/me', updateCurrentUser);
 router.patch('/me/password', changePassword);
 router.get('/', adminMiddleware, listUsers);
 router.patch('/:id', adminMiddleware, updateUser);
+router.delete('/:id', adminMiddleware, deleteUser);
 
 module.exports = router;

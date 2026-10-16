@@ -1,16 +1,20 @@
 // Purpose: Manage platform user accounts.
 import { useMemo, useState } from 'react'
+import ConfirmDialog from '../../components/common/ConfirmDialog.jsx'
 import AdminListPage from '../../components/admin/AdminListPage.jsx'
 import UserTable from '../../components/admin/UserTable.jsx'
 import useAdminRecords from '../../hooks/useAdminRecords.js'
 import adminService from '../../services/adminService.js'
 import { displayValue } from '../../components/admin/adminData.js'
+import useAuth from '../../hooks/useAuth.js'
 
 function Users() {
   const { records, loading, busyId, error, reload, runAction } = useAdminRecords(adminService.getUsers)
+  const { user: currentUser } = useAuth()
   const [query, setQuery] = useState('')
   const [role, setRole] = useState('')
   const [status, setStatus] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -38,9 +42,16 @@ function Users() {
     runAction(id, () => adminService.updateUser(id, { status: nextStatus }))
   }
 
+  async function deleteUser() {
+    const id = deleteTarget?._id ?? deleteTarget?.id
+    if (!id) return
+    const deleted = await runAction(id, () => adminService.deleteUser(id))
+    if (deleted) setDeleteTarget(null)
+  }
+
   return (
     <AdminListPage
-      description="Search accounts, assign roles, and suspend or reactivate access."
+      description="Search accounts, assign roles, suspend or reactivate access, and permanently delete accounts."
       emptyMessage="No user accounts match these filters."
       loading={loading}
       onRefresh={reload}
@@ -76,9 +87,21 @@ function Users() {
     >
       <UserTable
         busyId={busyId}
+        currentUserId={String(currentUser?._id ?? currentUser?.id ?? '')}
+        onDelete={setDeleteTarget}
         onRoleChange={changeRole}
         onStatusChange={changeStatus}
         users={filteredUsers}
+      />
+      <ConfirmDialog
+        confirmLabel="Delete user"
+        destructive
+        loading={Boolean(deleteTarget && busyId === String(deleteTarget._id ?? deleteTarget.id))}
+        message={`Permanently delete ${displayValue(deleteTarget?.name || deleteTarget?.email)} and their account data? This also removes their uploaded materials, messages, and groups. This action cannot be undone.`}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={deleteUser}
+        open={Boolean(deleteTarget)}
+        title="Delete user"
       />
     </AdminListPage>
   )

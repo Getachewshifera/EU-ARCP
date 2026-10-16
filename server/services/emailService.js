@@ -22,12 +22,13 @@ async function sendOtpEmail(email, otp, purpose) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('Email delivery is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS.');
     }
-    console.info(`[development OTP] ${purpose} code for ${email}: ${otp}`);
     return;
   }
 
+  const sender = process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER;
+
   await mailer.sendMail({
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    from: sender,
     to: email,
     subject: purpose === 'registration' ? 'Verify your EU-ARCP account' : 'Reset your EU-ARCP password',
     text: `Your verification code is ${otp}. It expires in 10 minutes.`,
@@ -40,12 +41,13 @@ async function sendActivationEmail(email, username, temporaryPassword, role) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('Email delivery is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS.');
     }
-    console.info(`[development activation] ${role} account for ${email}: username=${username}`);
     return;
   }
 
+  const sender = process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER;
+
   await mailer.sendMail({
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    from: sender,
     to: email,
     subject: 'Your EU-ARCP activation credentials',
     text: `Welcome to EU-ARCP. Your username is ${username}. Use the temporary password below to sign in and set a new permanent password within 5 minutes.\n\nTemporary password: ${temporaryPassword}\n\nImportant: Do not share this password and change it immediately after login.`,

@@ -2,12 +2,14 @@
 import { useMemo, useState } from 'react'
 import AdminListPage from '../../components/admin/AdminListPage.jsx'
 import MaterialTable from '../../components/admin/MaterialTable.jsx'
+import MaterialViewDialog from '../../components/admin/MaterialViewDialog.jsx'
 import useAdminRecords from '../../hooks/useAdminRecords.js'
 import adminService from '../../services/adminService.js'
 
 function Materials() {
   const { records, loading, busyId, error, reload, runAction } = useAdminRecords(adminService.getMaterials)
   const [status, setStatus] = useState('')
+  const [viewingMaterial, setViewingMaterial] = useState(null)
   const materials = useMemo(
     () => status ? records.filter((item) => (item.status || 'pending') === status) : records,
     [records, status],
@@ -38,7 +40,13 @@ function Materials() {
       )}
       error={error}
     >
-      <MaterialTable busyId={busyId} materials={materials} onReview={reviewMaterial} />
+      <MaterialTable
+        busyId={busyId}
+        materials={materials}
+        onReview={reviewMaterial}
+        onView={setViewingMaterial}
+      />
+      <MaterialViewDialog material={viewingMaterial} onClose={() => setViewingMaterial(null)} />
     </AdminListPage>
   )
 }

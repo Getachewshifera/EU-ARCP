@@ -11,7 +11,7 @@ const cleanupTimer = setInterval(() => {
 }, WINDOW_MS);
 cleanupTimer.unref();
 
-function authRateLimit(request, response, next) {
+function rateLimit(request, response, next, message) {
   const now = Date.now();
   const key = request.ip || request.socket.remoteAddress || 'unknown';
   let bucket = buckets.get(key);
@@ -22,9 +22,17 @@ function authRateLimit(request, response, next) {
   bucket.count += 1;
   if (bucket.count > MAX_REQUESTS) {
     response.set('Retry-After', String(Math.ceil((bucket.expiresAt - now) / 1000)));
-    return response.status(429).json({ message: 'Too many authentication requests. Please try again later.' });
+    return response.status(429).json({ message });
   }
   return next();
 }
 
-module.exports = { authRateLimit };
+function authRateLimit(request, response, next) {
+  return rateLimit(request, response, next, 'Too many authentication requests. Please try again later.');
+}
+
+function contactRateLimit(request, response, next) {
+  return rateLimit(request, response, next, 'Too many messages sent. Please try again later.');
+}
+
+module.exports = { authRateLimit, contactRateLimit };

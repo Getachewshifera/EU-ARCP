@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
   course: { type: String, trim: true, maxlength: 160 },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  admins: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   isPrivate: { type: Boolean, default: false },
 }, { timestamps: true });
 module.exports = mongoose.models.Group || mongoose.model('Group', schema);

@@ -46,8 +46,10 @@ function useAdminRecords(fetcher) {
     try {
       await action()
       await reload()
+      return true
     } catch (requestError) {
       setError(requestError.response?.data?.message || requestError.message || 'Unable to complete this action.')
+      return false
     } finally {
       setBusyId('')
     }
