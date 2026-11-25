@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
 import ThemeToggle from '../common/ThemeToggle.jsx'
+import PostFeed from '../posts/PostFeed.jsx'
 
 const navigation = [
   { label: 'Overview', to: '/admin', end: true },
@@ -12,6 +13,7 @@ const navigation = [
   { label: 'Materials', to: '/admin/materials' },
   { label: 'Groups', to: '/admin/groups' },
   { label: 'Reports', to: '/admin/reports' },
+  { label: 'Posts', to: '/admin/posts' },
   { label: 'Contact messages', to: '/admin/contact-messages' },
   { label: 'Activity logs', to: '/admin/activity' },
   { label: 'System settings', to: '/admin/settings' },
@@ -62,6 +64,7 @@ function AdminLayout() {
           </div>
         </header>
         <div className="admin-content">
+          <PostFeed compact />
           <div key={location.pathname} className="page-transition-wrapper">
             <Outlet />
           </div>

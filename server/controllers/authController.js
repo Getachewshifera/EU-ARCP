@@ -12,6 +12,7 @@ const { sendOtpEmail, sendActivationEmail } = require('../services/emailService'
 const { generateUniqueUsername, normalizeIdentityId } = require('../services/usernameService');
 const { generatePassword } = require('../utils/generatePassword');
 const { hashPassword, hashSecret, verifyPassword } = require('../utils/password');
+const { validatePasswordPolicy } = require('../services/passwordService');
 const { signToken } = require('../utils/token');
 
 const OTP_LIFETIME_MS = 10 * 60 * 1000;
@@ -294,8 +295,9 @@ async function activateAccount(request, response, next) {
     if (newPassword === currentPassword) {
       return response.status(400).json({ message: 'Choose a different password than the temporary one.' });
     }
-    if (newPassword.length < 8 || newPassword.length > 200) {
-      return response.status(400).json({ message: 'Password must be between 8 and 200 characters.' });
+    const passwordError = validatePasswordPolicy(newPassword);
+    if (passwordError) {
+      return response.status(400).json({ message: passwordError });
     }
 
     const user = await User.findOne({
@@ -412,8 +414,9 @@ async function resetPassword(request, response, next) {
     const email = normalizeEmail(request.body?.email);
     const token = request.body?.resetToken;
     const password = request.body?.password;
-    if (typeof password !== 'string' || password.length < 8 || password.length > 200) {
-      return response.status(400).json({ message: 'Password must be at least 8 characters.' });
+    const passwordError = validatePasswordPolicy(password);
+    if (passwordError) {
+      return response.status(400).json({ message: passwordError });
     }
     const user = await User.findOne({ email }).select('+resetTokenHash +resetTokenExpiresAt');
     if (!user || typeof token !== 'string' || !user.resetTokenHash || !user.resetTokenExpiresAt

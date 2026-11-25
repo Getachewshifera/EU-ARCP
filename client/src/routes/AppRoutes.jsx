@@ -6,6 +6,7 @@ import DashboardLayout from '../components/layout/DashboardLayout.jsx'
 import AcademicStructure from '../pages/admin/AcademicStructure.jsx'
 import ActivityLogs from '../pages/admin/ActivityLogs.jsx'
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx'
+import AdminPosts from '../pages/admin/AdminPosts.jsx'
 import Categories from '../pages/admin/Categories.jsx'
 import ContactMessages from '../pages/admin/ContactMessages.jsx'
 import Groups from '../pages/admin/Groups.jsx'
@@ -50,6 +51,7 @@ import StudentDashboard from '../pages/student/StudentDashboard.jsx'
 import StudentUploadMaterial from '../pages/student/UploadMaterial.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 import RoleRoute from './RoleRoute.jsx'
+import MaintenanceGate from './MaintenanceGate.jsx'
 
 function PublicPage({ children }) {
   return <PageTransition>{children}</PageTransition>
@@ -99,7 +101,8 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <RouteProgressBar />
-      <Routes>
+      <MaintenanceGate>
+        <Routes>
         <Route path="/" element={<PublicPage><Home /></PublicPage>} />
         <Route path="/materials" element={<PublicPage><PublicMaterials /></PublicPage>} />
         <Route path="/materials/:id" element={<PublicPage><PublicMaterialDetails /></PublicPage>} />
@@ -124,6 +127,7 @@ function AppRoutes() {
           <Route path="materials" element={<Materials />} />
           <Route path="groups" element={<Groups />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="posts" element={<AdminPosts />} />
           <Route path="contact-messages" element={<ContactMessages />} />
           <Route path="activity" element={<ActivityLogs />} />
           <Route path="settings" element={<SystemSettings />} />
@@ -158,7 +162,8 @@ function AppRoutes() {
         </Route>
 
         <Route path="*" element={<PublicPage><NotFound /></PublicPage>} />
-      </Routes>
+        </Routes>
+      </MaintenanceGate>
     </BrowserRouter>
   )
 }

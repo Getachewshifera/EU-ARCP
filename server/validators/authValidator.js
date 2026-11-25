@@ -1,5 +1,6 @@
 // Purpose: Validates authentication request data.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const { validatePasswordPolicy } = require('../services/passwordService');
 
 function normalizeEmail(value) {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -13,9 +14,8 @@ function validateLogin(payload) {
     return { error: 'Enter a valid email address.' };
   }
   if (password.length < 8 || password.length > 200) {
-    return { error: 'Password must be at least 8 characters.' };
+    return { error: 'Password must be at least 8 and no more than 200 characters.' };
   }
-
   return { value: { email, password } };
 }
 
@@ -56,9 +56,8 @@ function validatePasswordReset(payload) {
   if (!resetToken) {
     return { error: 'A valid reset token is required.' };
   }
-  if (password.length < 8 || password.length > 200) {
-    return { error: 'Password must be at least 8 characters.' };
-  }
+  const passwordError = validatePasswordPolicy(password);
+  if (passwordError) return { error: passwordError };
 
   return { value: { email, password, resetToken } };
 }

@@ -142,7 +142,7 @@ function Register() {
           setUniversities(next)
           setError('')
         }
-      } catch (loadError) {
+      } catch {
         if (!ignore) {
           setUniversities(fallbackUniversities.map((name, index) => ({ _id: `fallback-${index}`, name })))
           setError('')
@@ -159,13 +159,7 @@ function Register() {
   }, [])
 
   useEffect(() => {
-    if (!form.universityId) {
-      setColleges([])
-      setDepartments([])
-      setPrograms([])
-      setForm((current) => ({ ...current, collegeId: '', departmentId: '' }))
-      return
-    }
+    if (!form.universityId) return undefined
 
     let ignore = false
 
@@ -178,7 +172,7 @@ function Register() {
         const fallbackList = (selectedUniversity && fallbackAcademicData[selectedUniversity.name]?.colleges) || []
         const next = items.length ? items : fallbackList.map((name, index) => ({ _id: `fallback-college-${form.universityId}-${index}`, name }))
         if (!ignore) setColleges(next)
-      } catch (loadError) {
+      } catch {
         const selectedUniversity = universities.find((entry) => entry._id === form.universityId)
         const fallbackList = (selectedUniversity && fallbackAcademicData[selectedUniversity.name]?.colleges) || []
         if (!ignore) setColleges(fallbackList.map((name, index) => ({ _id: `fallback-college-${form.universityId}-${index}`, name })))
@@ -191,15 +185,10 @@ function Register() {
     return () => {
       ignore = true
     }
-  }, [form.universityId])
+  }, [form.universityId, universities])
 
   useEffect(() => {
-    if (!form.collegeId) {
-      setDepartments([])
-      setPrograms([])
-      setForm((current) => ({ ...current, departmentId: '', programId: '' }))
-      return
-    }
+    if (!form.collegeId) return undefined
 
     let ignore = false
 
@@ -210,12 +199,12 @@ function Register() {
         const items = Array.isArray(response.data?.items) ? response.data.items : []
         const selectedUniversity = universities.find((entry) => entry._id === form.universityId)
         const fallbackList = (selectedUniversity && fallbackAcademicData[selectedUniversity.name]?.departments) || []
-        const next = items.length ? items : fallbackList.map((name, index) => ({ _id: `fallback-department-${form.departmentId || form.collegeId || form.universityId}-${index}`, name }))
+        const next = items.length ? items : fallbackList.map((name, index) => ({ _id: `fallback-department-${form.collegeId || form.universityId}-${index}`, name }))
         if (!ignore) setDepartments(next)
-      } catch (loadError) {
+      } catch {
         const selectedUniversity = universities.find((entry) => entry._id === form.universityId)
         const fallbackList = (selectedUniversity && fallbackAcademicData[selectedUniversity.name]?.departments) || []
-        if (!ignore) setDepartments(fallbackList.map((name, index) => ({ _id: `fallback-department-${form.departmentId || form.collegeId || form.universityId}-${index}`, name })))
+        if (!ignore) setDepartments(fallbackList.map((name, index) => ({ _id: `fallback-department-${form.collegeId || form.universityId}-${index}`, name })))
       } finally {
         if (!ignore) setLoading((current) => ({ ...current, departments: false }))
       }
@@ -225,14 +214,10 @@ function Register() {
     return () => {
       ignore = true
     }
-  }, [form.collegeId, form.universityId])
+  }, [form.collegeId, form.universityId, universities])
 
   useEffect(() => {
-    if (!form.departmentId) {
-      setPrograms([])
-      setForm((current) => ({ ...current, programId: '' }))
-      return
-    }
+    if (!form.departmentId) return undefined
 
     let ignore = false
 
@@ -245,15 +230,19 @@ function Register() {
         if (!ignore) {
           setPrograms(fallbackPrograms)
           const selectedProgram = fallbackPrograms[0]
-          if (selectedProgram && selectedProgram._id !== form.programId) {
-            setForm((current) => ({ ...current, programId: selectedProgram._id }))
+          if (selectedProgram) {
+            setForm((current) => current.programId === selectedProgram._id
+              ? current
+              : { ...current, programId: selectedProgram._id })
           }
         }
-      } catch (loadError) {
+      } catch {
         if (!ignore) {
           const fallbackPrograms = [{ _id: `fallback-program-${form.departmentId}`, department: form.departmentId, name: 'General Program' }]
           setPrograms(fallbackPrograms)
-          setForm((current) => ({ ...current, programId: fallbackPrograms[0]._id }))
+          setForm((current) => current.programId === fallbackPrograms[0]._id
+            ? current
+            : { ...current, programId: fallbackPrograms[0]._id })
         }
       } finally {
         if (!ignore) setLoading((current) => ({ ...current, programs: false }))
@@ -387,7 +376,10 @@ function Register() {
         <div>
           <label className="form-label" htmlFor="register-university">University</label>
           <select className="form-select" disabled={submitting || loading.universities} id="register-university" name="universityId" onChange={(event) => {
-            setForm((current) => ({ ...current, universityId: event.target.value, collegeId: '', departmentId: '', academicYear: '' }))
+            setColleges([])
+            setDepartments([])
+            setPrograms([])
+            setForm((current) => ({ ...current, universityId: event.target.value, collegeId: '', departmentId: '', programId: '', academicYear: '' }))
           }} required value={form.universityId}>
             <option value="">Select your university</option>
             {universities.map((university) => (
@@ -399,6 +391,8 @@ function Register() {
         <div>
           <label className="form-label" htmlFor="register-college">College or school</label>
           <select className="form-select" disabled={submitting || loading.colleges || !form.universityId} id="register-college" name="collegeId" onChange={(event) => {
+            setDepartments([])
+            setPrograms([])
             setForm((current) => ({ ...current, collegeId: event.target.value, departmentId: '', programId: '' }))
           }} required value={form.collegeId}>
             <option value="">Select your college</option>
@@ -411,6 +405,7 @@ function Register() {
         <div>
           <label className="form-label" htmlFor="register-department">Department</label>
           <select className="form-select" disabled={submitting || loading.departments || !form.collegeId} id="register-department" name="departmentId" onChange={(event) => {
+            setPrograms([])
             setForm((current) => ({ ...current, departmentId: event.target.value, programId: '' }))
           }} required value={form.departmentId}>
             <option value="">Select your department</option>

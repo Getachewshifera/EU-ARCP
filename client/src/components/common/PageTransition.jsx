@@ -1,5 +1,5 @@
 // Purpose: Page transition wrapper and route indicator with "Megareja Open" (መጋረጃ መክፈት - Curtain Opening) transition.
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 export function MegarejaCurtain() {
@@ -19,14 +19,8 @@ export function MegarejaCurtain() {
 
 export function RouteProgressBar() {
   const location = useLocation()
-  const [active, setActive] = useState(false)
 
   useEffect(() => {
-    setActive(true)
-    const timer = setTimeout(() => {
-      setActive(false)
-    }, 480)
-
     if (location.hash) {
       const targetId = location.hash.replace('#', '')
       const scrollTimer = setTimeout(() => {
@@ -36,24 +30,19 @@ export function RouteProgressBar() {
         }
       }, 120)
       return () => {
-        clearTimeout(timer)
         clearTimeout(scrollTimer)
       }
     } else {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }
-
-    return () => clearTimeout(timer)
   }, [location.pathname, location.search, location.hash])
-
-  if (!active) return null
 
   return (
     <>
-      <div aria-hidden="true" className="route-progress-container">
+      <div aria-hidden="true" className="route-progress-container" key={location.key}>
         <div className="route-progress-bar" />
       </div>
-      <MegarejaCurtain />
+      <MegarejaCurtain key={location.key} />
     </>
   )
 }

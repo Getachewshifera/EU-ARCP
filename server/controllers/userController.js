@@ -18,6 +18,7 @@ const RegistrationRequest = require('../models/RegistrationRequest');
 const { validateUserUpdate } = require('../validators/userValidator');
 const { normalizeUserProfileUpdate } = require('../validators/userProfileValidator');
 const { hashPassword, verifyPassword } = require('../utils/password');
+const { validatePasswordPolicy } = require('../services/passwordService');
 const { avatarDirectory } = require('../middleware/uploadMiddleware');
 
 function safeUser(user) {
@@ -284,9 +285,12 @@ async function updateCurrentUser(request, response, next) {
 
 async function changePassword(request, response, next) {
   const { currentPassword, newPassword } = request.body || {};
-  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string'
-    || newPassword.length < 8 || newPassword.length > 200) {
-    return response.status(400).json({ message: 'Current password and a new password of at least 8 characters are required.' });
+  if (typeof currentPassword !== 'string' || !currentPassword) {
+    return response.status(400).json({ message: 'Current password is required.' });
+  }
+  const passwordError = validatePasswordPolicy(newPassword);
+  if (passwordError) {
+    return response.status(400).json({ message: passwordError });
   }
   try {
     const user = await User.findById(request.user._id).select('+password');

@@ -2,6 +2,7 @@
 import { Link, Navigate } from 'react-router-dom'
 import Navbar from '../../components/layout/Navbar.jsx'
 import Footer from '../../components/layout/Footer.jsx'
+import PostFeed from '../../components/posts/PostFeed.jsx'
 import useAuth from '../../hooks/useAuth.js'
 
 const heroPillars = [
@@ -184,6 +185,10 @@ function Home() {
               ))}
             </div>
           </div>
+        </section>
+
+        <section className="container py-5">
+          <PostFeed />
         </section>
 
         {/* ==========================================================================

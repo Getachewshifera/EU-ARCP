@@ -6,8 +6,10 @@ const multer = require('multer');
 
 const uploadDirectory = path.resolve(__dirname, '../uploads');
 const avatarDirectory = path.resolve(__dirname, '../uploads/avatars');
+const postImageDirectory = path.resolve(__dirname, '../uploads/posts');
 fs.mkdirSync(uploadDirectory, { recursive: true });
 fs.mkdirSync(avatarDirectory, { recursive: true });
+fs.mkdirSync(postImageDirectory, { recursive: true });
 
 const allowedTypes = new Map([
   ['.pdf', 'application/pdf'],
@@ -68,5 +70,41 @@ const uploadAvatar = multer({
   },
 });
 
-module.exports = { uploadMaterial, uploadAvatar, uploadDirectory, avatarDirectory };
+const postImageStorage = multer.diskStorage({
+  destination: (_request, _file, callback) => callback(null, postImageDirectory),
+  filename: (_request, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    callback(null, `${crypto.randomUUID()}${extension}`);
+  },
+});
+
+const postImageTypes = new Map([
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.png', 'image/png'],
+  ['.webp', 'image/webp'],
+]);
+
+const uploadPostImage = multer({
+  storage: postImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_request, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (postImageTypes.get(extension) !== file.mimetype) {
+      const error = new Error('Post images must be JPEG, PNG, or WebP files.');
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
+module.exports = {
+  uploadMaterial,
+  uploadAvatar,
+  uploadPostImage,
+  uploadDirectory,
+  avatarDirectory,
+  postImageDirectory,
+};
 

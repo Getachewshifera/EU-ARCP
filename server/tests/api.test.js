@@ -20,7 +20,7 @@ async function withServer(run) {
 
 test('protected API routes reject unauthenticated requests before database access', async () => {
   await withServer(async (baseUrl) => {
-    const [userResponse, adminResponse, resourceWriteResponse, deleteUserResponse] = await Promise.all([
+    const [userResponse, adminResponse, resourceWriteResponse, deleteUserResponse, postWriteResponse, appearanceWriteResponse, maintenanceWriteResponse] = await Promise.all([
       fetch(`${baseUrl}/api/users/me`),
       fetch(`${baseUrl}/api/admin/dashboard`),
       fetch(`${baseUrl}/api/categories`, {
@@ -29,12 +29,29 @@ test('protected API routes reject unauthenticated requests before database acces
         body: JSON.stringify({ name: 'Unauthorized category' }),
       }),
       fetch(`${baseUrl}/api/users/507f1f77bcf86cd799439011`, { method: 'DELETE' }),
+      fetch(`${baseUrl}/api/posts`, {
+        method: 'POST',
+        body: new FormData(),
+      }),
+      fetch(`${baseUrl}/api/site/appearance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ primaryColor: '#2563eb', backgroundColor: '#f4f7fb' }),
+      }),
+      fetch(`${baseUrl}/api/site/maintenance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: true, message: 'Maintenance in progress.' }),
+      }),
     ]);
 
     assert.equal(userResponse.status, 401);
     assert.equal(adminResponse.status, 401);
     assert.equal(resourceWriteResponse.status, 401);
     assert.equal(deleteUserResponse.status, 401);
+    assert.equal(postWriteResponse.status, 401)
+    assert.equal(appearanceWriteResponse.status, 401)
+    assert.equal(maintenanceWriteResponse.status, 401)
   });
 });
 

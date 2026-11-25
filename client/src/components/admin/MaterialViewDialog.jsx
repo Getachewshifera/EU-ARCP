@@ -21,31 +21,32 @@ function formatCategory(cat) {
 }
 
 function MaterialViewDialog({ material, onClose }) {
-  const [fileUrl, setFileUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loadState, setLoadState] = useState(null)
 
   const id = material?._id ?? material?.id
+  const currentLoad = loadState?.id === id
+    ? loadState
+    : { loading: Boolean(id), error: '', fileUrl: '' }
 
   useEffect(() => {
     if (!id) return undefined
 
     let active = true
     let objectUrl = ''
-    setLoading(true)
-    setError('')
-    setFileUrl('')
 
     adminService.getMaterialFile(id)
       .then((response) => {
         objectUrl = URL.createObjectURL(response.data)
-        if (active) setFileUrl(objectUrl)
+        if (active) {
+          setLoadState({ id, loading: false, error: '', fileUrl: objectUrl })
+        } else {
+          URL.revokeObjectURL(objectUrl)
+        }
       })
       .catch(() => {
-        if (active) setError('Unable to load the material file. Please try again.')
-      })
-      .finally(() => {
-        if (active) setLoading(false)
+        if (active) {
+          setLoadState({ id, loading: false, error: 'Unable to load the material file. Please try again.', fileUrl: '' })
+        }
       })
 
     return () => {
@@ -82,27 +83,27 @@ function MaterialViewDialog({ material, onClose }) {
             <dd className="col-sm-9">{material.fileName || 'Uploaded material'}</dd>
           </dl>
 
-          {loading && <div className="py-5 text-center" role="status">Loading material preview…</div>}
-          {error && <div className="alert alert-danger" role="alert">{error}</div>}
-          {!loading && fileUrl && canPreview && (
+          {currentLoad.loading && <div className="py-5 text-center" role="status">Loading material preview…</div>}
+          {currentLoad.error && <div className="alert alert-danger" role="alert">{currentLoad.error}</div>}
+          {!currentLoad.loading && currentLoad.fileUrl && canPreview && (
             <div className="border rounded overflow-hidden" style={{ height: '65vh' }}>
               {mimeType.startsWith('image/') ? (
-                <img alt={material.title || 'Material preview'} className="w-100 h-100 object-fit-contain" src={fileUrl} />
+                <img alt={material.title || 'Material preview'} className="w-100 h-100 object-fit-contain" src={currentLoad.fileUrl} />
               ) : mimeType.startsWith('text/') ? (
-                <iframe className="w-100 h-100 border-0" title={`${material.title || 'Material'} preview`} src={fileUrl} />
+                <iframe className="w-100 h-100 border-0" title={`${material.title || 'Material'} preview`} src={currentLoad.fileUrl} />
               ) : (
-                <iframe className="w-100 h-100 border-0" title={`${material.title || 'Material'} preview`} src={fileUrl} />
+                <iframe className="w-100 h-100 border-0" title={`${material.title || 'Material'} preview`} src={currentLoad.fileUrl} />
               )}
             </div>
           )}
-          {!loading && fileUrl && !canPreview && (
+          {!currentLoad.loading && currentLoad.fileUrl && !canPreview && (
             <div className="alert alert-info" role="status">
               This file type cannot be previewed in the browser. Download it to view the material.
             </div>
           )}
-          {!loading && fileUrl && (
+          {!currentLoad.loading && currentLoad.fileUrl && (
             <div className="d-flex justify-content-end mt-3">
-              <a className="btn btn-primary" download={material.fileName || true} href={fileUrl}>Download material</a>
+              <a className="btn btn-primary" download={material.fileName || true} href={currentLoad.fileUrl}>Download material</a>
             </div>
           )}
         </>

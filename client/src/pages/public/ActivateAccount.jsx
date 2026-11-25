@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
+import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
 
 
 function formatCountdown(totalMs) {
@@ -18,7 +19,7 @@ function ActivateAccount() {
   const location = useLocation()
   const navigate = useNavigate()
   const registrationData = location.state || {}
-  const expiryTime = registrationData.expiresAt || registrationData.activationExpiresAt || new Date(Date.now() + 5 * 60 * 1000).toISOString()
+  const expiryTime = registrationData.expiresAt || registrationData.activationExpiresAt
 
   const [form, setForm] = useState({
     username: registrationData.username || '',
@@ -28,17 +29,23 @@ function ActivateAccount() {
     confirmPassword: '',
   })
   const [error, setError] = useState('')
-  const [notice, setNotice] = useState(registrationData.emailDeliveryFailed ? 'Email delivery is unavailable, but your activation details are shown below.' : 'Use the temporary credentials shown below to complete account activation.')
+  const notice = registrationData.emailDeliveryFailed
+    ? 'Email delivery is unavailable, but your activation details are shown below.'
+    : 'Use the temporary credentials shown below to complete account activation.'
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [copiedField, setCopiedField] = useState('')
-  const [remainingMs, setRemainingMs] = useState(Math.max(0, new Date(expiryTime).getTime() - Date.now()))
+  const [remainingMs, setRemainingMs] = useState(5 * 60 * 1000)
 
   useEffect(() => {
-    const timerId = setInterval(() => {
-      setRemainingMs(Math.max(0, new Date(expiryTime).getTime() - Date.now()))
-    }, 1000)
-    return () => clearInterval(timerId)
+    const expiresAt = expiryTime ? new Date(expiryTime).getTime() : Date.now() + 5 * 60 * 1000
+    const updateRemaining = () => setRemainingMs(Math.max(0, expiresAt - Date.now()))
+    const initialTimerId = setTimeout(updateRemaining, 0)
+    const intervalId = setInterval(updateRemaining, 1000)
+    return () => {
+      clearTimeout(initialTimerId)
+      clearInterval(intervalId)
+    }
   }, [expiryTime])
 
   const expired = remainingMs <= 0
@@ -49,7 +56,7 @@ function ActivateAccount() {
       await navigator.clipboard.writeText(value)
       setCopiedField(label)
       window.setTimeout(() => setCopiedField(''), 1500)
-    } catch (_copyError) {
+    } catch {
       setError('Unable to copy to clipboard. Please copy the value manually.')
     }
   }
@@ -69,8 +76,9 @@ function ActivateAccount() {
       setError('Activation details are missing. Please go back and try again.')
       return
     }
-    if (form.newPassword.length < 8 || form.newPassword.length > 200) {
-      setError('New password must be between 8 and 200 characters.')
+    const passwordError = getPasswordPolicyError(form.newPassword)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
     if (form.newPassword !== form.confirmPassword) {
@@ -132,10 +140,14 @@ function ActivateAccount() {
           id="new-password"
           label="New password"
           minLength={8}
+          maxLength={200}
           name="newPassword"
           onChange={update}
+          pattern={PASSWORD_PATTERN}
           required
           value={form.newPassword}
+          hint={PASSWORD_HINT}
+          title={PASSWORD_HINT}
         />
         <PasswordInput
           autoComplete="new-password"
@@ -143,10 +155,13 @@ function ActivateAccount() {
           id="confirm-password"
           label="Confirm new password"
           minLength={8}
+          maxLength={200}
           name="confirmPassword"
           onChange={update}
+          pattern={PASSWORD_PATTERN}
           required
           value={form.confirmPassword}
+          title={PASSWORD_HINT}
         />
 
         <button className="btn btn-primary btn-lg" disabled={submitting || expired} type="submit">

@@ -27,6 +27,22 @@ const adminService = {
     return api.get('/admin/dashboard')
   },
 
+  getPosts() {
+    return api.get('/posts/admin')
+  },
+
+  createPost(data) {
+    return api.post('/posts', data, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+
+  updatePost(id, data) {
+    return api.put(`/posts/${encodeURIComponent(id)}`, data, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+
+  deletePost(id) {
+    return api.delete(`/posts/${encodeURIComponent(id)}`)
+  },
+
   getUsers(params) {
     return api.get('/users', { params })
   },

@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
+import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
 
 
 function ResetPassword() {
@@ -24,6 +25,11 @@ function ResetPassword() {
     setError('')
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.')
+      return
+    }
+    const passwordError = getPasswordPolicyError(form.password)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
     setSubmitting(true)
@@ -59,20 +65,27 @@ function ResetPassword() {
             id="reset-password"
             label="New password"
             minLength={8}
+            maxLength={200}
             name="password"
             onChange={update}
+            pattern={PASSWORD_PATTERN}
             required
             value={form.password}
+            hint={PASSWORD_HINT}
+            title={PASSWORD_HINT}
           />
           <PasswordInput
             autoComplete="new-password"
             id="reset-confirm-password"
             label="Confirm new password"
             minLength={8}
+            maxLength={200}
             name="confirmPassword"
             onChange={update}
+            pattern={PASSWORD_PATTERN}
             required
             value={form.confirmPassword}
+            title={PASSWORD_HINT}
           />
           <button className="btn btn-primary" disabled={submitting} type="submit">
             {submitting ? 'Updating…' : 'Update password'}

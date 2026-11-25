@@ -4,6 +4,7 @@ const { connectDatabase } = require('../config/database');
 const User = require('../models/User');
 const University = require('../models/University');
 const { hashPassword } = require('../utils/password');
+const { validatePasswordPolicy } = require('../services/passwordService');
 
 async function seedAdmin() {
   const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
@@ -13,9 +14,8 @@ async function seedAdmin() {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error('Set a valid ADMIN_EMAIL in server/.env.');
   }
-  if (password.length < 8 || password.length > 200) {
-    throw new Error('ADMIN_PASSWORD must contain between 8 and 200 characters.');
-  }
+  const passwordError = validatePasswordPolicy(password);
+  if (passwordError) throw new Error(`ADMIN_PASSWORD is invalid. ${passwordError}`);
   if (!name) throw new Error('Set ADMIN_NAME in server/.env.');
   if (!username || username.length > 50) throw new Error('ADMIN_USERNAME must contain 1 to 50 characters.');
 

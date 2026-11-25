@@ -3,6 +3,7 @@ import lecturerService from '../../services/lecturerService.js'
 import { PageHeader } from '../../components/portal/lecturer/LecturerUI.jsx'
 import { errorMessage } from '../../components/portal/lecturer/lecturerUtils.js'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
+import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
 
 function ChangePassword() {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -14,6 +15,11 @@ function ChangePassword() {
     event.preventDefault(); setError(''); setNotice('')
     if (form.newPassword !== form.confirmPassword) {
       setError('The new password and confirmation do not match.')
+      return
+    }
+    const passwordError = getPasswordPolicyError(form.newPassword)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
     setSaving(true)
@@ -46,14 +52,17 @@ function ChangePassword() {
             <PasswordInput
               autoComplete="new-password"
               className="col-md-8"
-              hint="Use at least 8 characters."
+              hint={PASSWORD_HINT}
               id="new-password"
               label="New password"
               minLength={8}
+              maxLength={200}
               name="newPassword"
               onChange={(event) => setForm({ ...form, newPassword: event.target.value })}
+              pattern={PASSWORD_PATTERN}
               required
               value={form.newPassword}
+              title={PASSWORD_HINT}
             />
             <PasswordInput
               autoComplete="new-password"
@@ -61,10 +70,13 @@ function ChangePassword() {
               id="confirm-password"
               label="Confirm new password"
               minLength={8}
+              maxLength={200}
               name="confirmPassword"
               onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
+              pattern={PASSWORD_PATTERN}
               required
               value={form.confirmPassword}
+              title={PASSWORD_HINT}
             />
           </div>
         </div>

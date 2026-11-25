@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { signToken, verifyToken } = require('../utils/token');
 const { validateLogin, validateOtpRequest, validateForgotPassword } = require('../validators/authValidator');
+const { validatePasswordPolicy } = require('../services/passwordService');
 
 const secret = 'test-secret-that-is-at-least-thirty-two-characters';
 
@@ -23,6 +24,16 @@ test('login validation rejects invalid credentials', () => {
     email: 'user@example.com',
     password: 'long-enough-password',
   });
+});
+
+test('password policy requires length, case, a number, and a special character', () => {
+  assert.equal(validatePasswordPolicy('GoodPass1!'), null);
+  assert.match(validatePasswordPolicy('short1!'), /8 characters/);
+  assert.match(validatePasswordPolicy('lowercase1!'), /uppercase/);
+  assert.match(validatePasswordPolicy('UPPERCASE1!'), /lowercase/);
+  assert.match(validatePasswordPolicy('MixedCase!'), /number/);
+  assert.match(validatePasswordPolicy('MixedCase123'), /special character/);
+  assert.match(validatePasswordPolicy(`GoodPass1!${'x'.repeat(191)}`), /200 characters/);
 });
 
 test('OTP validation enforces a six-digit code and supported purpose', () => {

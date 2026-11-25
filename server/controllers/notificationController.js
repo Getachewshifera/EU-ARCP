@@ -20,7 +20,7 @@ async function markRead(request, response, next) {
     const item = await Notification.findOneAndUpdate(
       { _id: request.params.id, user: request.user._id },
       { $set: { read: request.body?.read !== false } },
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     );
     if (!item) return response.status(404).json({ message: 'Notification was not found.' });
     return response.json({ item });

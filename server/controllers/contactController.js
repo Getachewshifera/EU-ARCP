@@ -31,7 +31,11 @@ async function update(request, response, next) {
   const { status } = request.body || {};
   if (!['open', 'read', 'closed'].includes(status)) return response.status(400).json({ message: 'Choose a valid message status.' });
   try {
-    const item = await ContactMessage.findByIdAndUpdate(request.params.id, { status }, { new: true, runValidators: true });
+    const item = await ContactMessage.findByIdAndUpdate(
+      request.params.id,
+      { status },
+      { returnDocument: 'after', runValidators: true },
+    );
     if (!item) return response.status(404).json({ message: 'Contact message was not found.' });
     return response.json({ item });
   } catch (error) {

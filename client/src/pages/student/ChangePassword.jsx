@@ -3,6 +3,7 @@ import studentService from '../../services/studentService.js'
 import { getErrorMessage } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, Notice } from '../../components/portal/student/StudentUi.jsx'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
+import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
 
 
 const initialForm = { currentPassword: '', newPassword: '', confirmPassword: '' }
@@ -22,8 +23,9 @@ export default function ChangePassword() {
       setError('The new password and confirmation do not match.')
       return
     }
-    if (form.newPassword.length < 8) {
-      setError('Your new password must be at least 8 characters long.')
+    const passwordError = getPasswordPolicyError(form.newPassword)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
     setSaving(true)
@@ -59,24 +61,30 @@ export default function ChangePassword() {
           <PasswordInput
             autoComplete="new-password"
             className="mb-3"
-            hint="Use at least 8 characters."
+            hint={PASSWORD_HINT}
             id="new-password"
             label="New password"
             minLength={8}
+            maxLength={200}
             name="newPassword"
             onChange={(event) => setForm({ ...form, newPassword: event.target.value })}
+            pattern={PASSWORD_PATTERN}
             required
             value={form.newPassword}
+            title={PASSWORD_HINT}
           />
           <PasswordInput
             autoComplete="new-password"
             id="confirm-password"
             label="Confirm new password"
             minLength={8}
+            maxLength={200}
             name="confirmPassword"
             onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
+            pattern={PASSWORD_PATTERN}
             required
             value={form.confirmPassword}
+            title={PASSWORD_HINT}
           />
         </div>
         <div className="card-footer bg-body d-flex justify-content-end">

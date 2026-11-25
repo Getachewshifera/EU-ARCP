@@ -5,6 +5,7 @@ import useAuth from '../../hooks/useAuth.js'
 import userService from '../../services/userService.js'
 import { getAvatarUrl } from '../../services/studentService.js'
 import ThemeToggle from '../common/ThemeToggle.jsx'
+import PostFeed from '../posts/PostFeed.jsx'
 
 const roleNavigation = {
   student: [
@@ -82,7 +83,7 @@ function DashboardLayout({ role }) {
   }
 
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell dashboard-shell-${role}`}>
       <aside className="dashboard-sidebar">
         <Link className="dashboard-brand" to={`/${role}`}>EU-ARCP <span>{role}</span></Link>
         <nav aria-label={`${role} navigation`} className="nav flex-column dashboard-nav">
@@ -122,6 +123,7 @@ function DashboardLayout({ role }) {
           </div>
         </header>
         <div className="dashboard-content">
+          <PostFeed compact />
           <div key={location.pathname} className="page-transition-wrapper">
             <Outlet />
           </div>
