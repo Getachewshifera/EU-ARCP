@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import MaterialFilters from '../../components/materials/MaterialFilters.jsx'
 import studentService from '../../services/studentService.js'
 import { asList, formatDate, getErrorMessage, getRecordId, getRecordTitle } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState, EmptyState } from '../../components/portal/student/StudentUi.jsx'
@@ -12,17 +13,22 @@ export default function Materials() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
+  const [filters, setFilters] = useState({ category: '', university: '', department: '' })
 
   const loadMaterials = useCallback(async () => {
+    setLoading(true)
     try {
-      setMaterials(asList(await studentService.listMaterials(query ? { search: query } : {}), ['materials']))
+      setMaterials(asList(await studentService.listMaterials({
+        search: query || undefined,
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value)),
+      }), ['materials']))
       setError('')
     } catch (requestError) {
       setError(getErrorMessage(requestError))
     } finally {
       setLoading(false)
     }
-  }, [query])
+  }, [filters, query])
   useEffect(() => {
     const timer = window.setTimeout(loadMaterials, 0)
     return () => window.clearTimeout(timer)
@@ -50,6 +56,7 @@ export default function Materials() {
         <div className="col-auto"><button className="btn btn-outline-primary" type="submit">{t('Search')}</button></div>
         {query && <div className="col-auto"><button className="btn btn-outline-secondary" type="button" onClick={() => { setLoading(true); setSearch(''); setQuery('') }}>{t('Clear')}</button></div>}
       </form>
+      <MaterialFilters filters={filters} onChange={setFilters} />
       {loading ? <LoadingState label="Loading materials…" /> : error ? <ErrorState message={error} onRetry={retryMaterials} /> : materials.length === 0
         ? <EmptyState title={query ? 'No matching materials' : 'No materials available'} description={query ? 'Try a different search term.' : 'Shared resources will appear here when they are available.'} />
         : <div className="row g-3">

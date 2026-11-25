@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import studentService from '../../services/studentService.js'
 import { asEntity, displayPerson, formatDate, getErrorMessage, getRecordTitle } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState } from '../../components/portal/student/StudentUi.jsx'
+import DownloadMaterialButton from '../../components/materials/DownloadMaterialButton.jsx'
 import useLanguage from '../../hooks/useLanguage.js'
 
 export default function MaterialDetails() {
@@ -31,8 +32,6 @@ export default function MaterialDetails() {
     loadMaterial()
   }
 
-  const fileUrl = material?.fileUrl || material?.downloadUrl || material?.url || material?.file?.url
-  const fileHref = typeof fileUrl === 'string' && (fileUrl.startsWith('/') || /^https?:\/\//i.test(fileUrl)) ? fileUrl : ''
   const author = displayPerson(material?.uploadedBy || material?.author || material?.uploader)
 
   return (
@@ -50,11 +49,11 @@ export default function MaterialDetails() {
               {author && <><dt className="col-sm-3">{t('Shared by')}</dt><dd className="col-sm-9">{author}</dd></>}
               {(material?.createdAt || material?.uploadedAt) && <><dt className="col-sm-3">{t('Added')}</dt><dd className="col-sm-9">{formatDate(material.createdAt || material.uploadedAt)}</dd></>}
               {material?.status && <><dt className="col-sm-3">{t('Status')}</dt><dd className="col-sm-9">{t(material.status)}</dd></>}
-              {material?.file?.originalName && <><dt className="col-sm-3">{t('File')}</dt><dd className="col-sm-9">{material.file.originalName}</dd></>}
+              {material?.fileName && <><dt className="col-sm-3">{t('File')}</dt><dd className="col-sm-9">{material.fileName}</dd></>}
             </dl>
           </div>
           <div className="card-footer bg-body">
-            {fileHref ? <a className="btn btn-primary" href={fileHref} target="_blank" rel="noreferrer">{t('Open or download resource')}</a> : <p className="small text-body-secondary mb-0">{t('No downloadable file was included with this material.')}</p>}
+            {material?.fileName ? <DownloadMaterialButton materialId={id} fileName={material.fileName} label="Open or download resource" /> : <p className="small text-body-secondary mb-0">{t('No downloadable file was included with this material.')}</p>}
           </div>
         </article>
       )}

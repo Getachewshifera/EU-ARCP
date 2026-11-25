@@ -10,7 +10,8 @@ function escapeRegex(value) {
 }
 
 function getReferenceId(value) {
-  return value && typeof value === 'object' ? value._id ?? value.id : value;
+  if (!value || typeof value !== 'object') return value;
+  return value._id ?? value.id ?? value;
 }
 
 async function validateAndNormalizeReferences(Model, values, current = null) {
@@ -20,9 +21,10 @@ async function validateAndNormalizeReferences(Model, values, current = null) {
     if (values[field] === '' && schemaPath?.instance === 'Number') values[field] = null;
   }
 
-  if (Model.modelName === 'College' && values.university) {
-    if (!mongoose.isValidObjectId(values.university)
-      || !await University.exists({ _id: values.university })) {
+  if (Model.modelName === 'College' && 'university' in values) {
+    const universityId = getReferenceId(values.university);
+    if (!mongoose.isValidObjectId(universityId)
+      || !await University.exists({ _id: universityId })) {
       return 'Select an existing university.';
     }
   }
@@ -40,24 +42,27 @@ async function validateAndNormalizeReferences(Model, values, current = null) {
     values.university = college.university;
   }
 
-  if (Model.modelName === 'Program' && values.department) {
-    if (!mongoose.isValidObjectId(values.department)
-      || !await Department.exists({ _id: values.department })) {
+  if (Model.modelName === 'Program' && 'department' in values) {
+    const departmentId = getReferenceId(values.department);
+    if (!mongoose.isValidObjectId(departmentId)
+      || !await Department.exists({ _id: departmentId })) {
       return 'Select an existing department.';
     }
   }
 
   if (Model.modelName === 'Course' && ('department' in values || 'program' in values)) {
     let program = null;
-    const programId = getReferenceId(values.program ?? current?.program);
+    const hasProgram = Object.prototype.hasOwnProperty.call(values, 'program');
+    const hasDepartment = Object.prototype.hasOwnProperty.call(values, 'department');
+    const programId = getReferenceId(hasProgram ? values.program : current?.program);
     if (programId) {
       if (!mongoose.isValidObjectId(programId)) return 'Select an existing program.';
       program = await Program.findById(programId).select('department').lean();
       if (!program) return 'The selected program was not found.';
     }
 
-    let departmentId = getReferenceId(values.department ?? current?.department);
-    if ('program' in values && !('department' in values) && program?.department) {
+    let departmentId = getReferenceId(hasDepartment ? values.department : current?.department);
+    if (program?.department && (!hasDepartment || !departmentId)) {
       departmentId = String(program.department);
       values.department = program.department;
     }
@@ -103,7 +108,7 @@ function createResourceController(Model) {
           }
         }
         const page = Math.max(1, Number.parseInt(request.query.page, 10) || 1);
-        const limit = Math.min(100, Math.max(1, Number.parseInt(request.query.limit, 10) || 100));
+        const limit = Math.min(500, Math.max(1, Number.parseInt(request.query.limit, 10) || 100));
         const [items, total] = await Promise.all([
           Model.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
           Model.countDocuments(filter),

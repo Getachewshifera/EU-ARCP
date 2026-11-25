@@ -20,7 +20,7 @@ async function withServer(run) {
 
 test('protected API routes reject unauthenticated requests before database access', async () => {
   await withServer(async (baseUrl) => {
-    const [userResponse, adminResponse, resourceWriteResponse, deleteUserResponse, postWriteResponse, appearanceWriteResponse, maintenanceWriteResponse] = await Promise.all([
+    const [userResponse, adminResponse, resourceWriteResponse, deleteUserResponse, postWriteResponse, appearanceWriteResponse, maintenanceWriteResponse, materialDownloadResponse] = await Promise.all([
       fetch(`${baseUrl}/api/users/me`),
       fetch(`${baseUrl}/api/admin/dashboard`),
       fetch(`${baseUrl}/api/categories`, {
@@ -43,6 +43,7 @@ test('protected API routes reject unauthenticated requests before database acces
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: true, message: 'Maintenance in progress.' }),
       }),
+      fetch(`${baseUrl}/api/materials/507f1f77bcf86cd799439011/download`),
     ]);
 
     assert.equal(userResponse.status, 401);
@@ -52,6 +53,7 @@ test('protected API routes reject unauthenticated requests before database acces
     assert.equal(postWriteResponse.status, 401)
     assert.equal(appearanceWriteResponse.status, 401)
     assert.equal(maintenanceWriteResponse.status, 401)
+    assert.equal(materialDownloadResponse.status, 401)
   });
 });
 

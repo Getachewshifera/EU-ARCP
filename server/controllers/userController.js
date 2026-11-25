@@ -20,6 +20,7 @@ const { normalizeUserProfileUpdate } = require('../validators/userProfileValidat
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { validatePasswordPolicy } = require('../services/passwordService');
 const { avatarDirectory } = require('../middleware/uploadMiddleware');
+const { removeMaterialObject } = require('../services/fileService');
 
 function safeUser(user) {
   const record = user.toObject ? user.toObject() : { ...user };
@@ -141,14 +142,28 @@ async function deleteUser(request, response, next) {
     const userId = user._id;
     const groups = await Group.find({ owner: userId }).select('_id').lean();
     const groupIds = groups.map((group) => group._id);
-    const materials = await Material.find({ uploader: userId }).select('_id fileUrl').lean();
+    const materials = await Material.find({ uploader: userId }).select('_id +storagePath +fileUrl').lean();
     const materialIds = materials.map((material) => material._id);
 
     for (const material of materials) {
-      const filename = path.basename(material.fileUrl);
-      await fs.unlink(path.resolve(__dirname, '../uploads', filename)).catch((error) => {
-        if (error.code !== 'ENOENT') throw error;
-      });
+      if (material.storagePath) {
+        await removeMaterialObject(material.storagePath);
+      } else if (material.fileUrl) {
+        let legacyName = material.fileUrl;
+        if (/^https?:\/\//i.test(legacyName)) {
+          try {
+            legacyName = new URL(legacyName).pathname;
+          } catch {
+            legacyName = '';
+          }
+        }
+        legacyName = path.basename(String(legacyName).replace(/\\/g, '/'));
+        if (/^[\w.-]{1,255}$/.test(legacyName) && legacyName !== '.' && legacyName !== '..') {
+          await fs.unlink(path.resolve(__dirname, '../uploads', legacyName)).catch((error) => {
+            if (error.code !== 'ENOENT') throw error;
+          });
+        }
+      }
     }
 
     if (groupIds.length) {

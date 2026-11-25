@@ -21,8 +21,15 @@ const studentService = {
   changePassword: (data) => api.patch('/users/me/password', data),
   listMaterials: (params) => api.get('/materials', { params }),
   getMyMaterials: (params) => api.get('/materials/mine', { params }),
-  uploadMaterial: (formData) => api.post('/materials', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadMaterial: (formData, onUploadProgress) => api.post('/materials', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (event) => {
+      if (event.total) onUploadProgress?.(Math.round((event.loaded * 100) / event.total))
+    },
+  }),
   getMaterial: (id) => api.get(byId('/materials', id)),
+  updateMaterial: (id, data) => api.patch(byId('/materials', id), data),
+  deleteMaterial: (id) => api.delete(byId('/materials', id)),
   listGroups: (params) => api.get('/groups', { params }),
   createGroup: (data) => api.post('/groups', data),
   getGroup: (id) => api.get(byId('/groups', id)),

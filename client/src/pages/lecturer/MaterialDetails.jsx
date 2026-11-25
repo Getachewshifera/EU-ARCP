@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import lecturerService from '../../services/lecturerService.js'
 import { PageHeader, RequestState } from '../../components/portal/lecturer/LecturerUI.jsx'
+import DownloadMaterialButton from '../../components/materials/DownloadMaterialButton.jsx'
 import { displayDate, errorMessage, unwrap } from '../../components/portal/lecturer/lecturerUtils.js'
 import useLanguage from '../../hooks/useLanguage.js'
 
@@ -39,7 +40,7 @@ function MaterialDetails() {
             {(material.author?.name || material.lecturer?.name) && <><dt className="col-sm-3">{t('Lecturer')}</dt><dd className="col-sm-9">{material.author?.name || material.lecturer?.name}</dd></>}
             <dt className="col-sm-3">{t('Description')}</dt><dd className="col-sm-9 text-break">{material.description || t('No description provided.')}</dd>
           </dl>
-          {(material.fileUrl || material.file_url || material.url) && <a className="btn btn-primary" href={material.fileUrl || material.file_url || material.url} target="_blank" rel="noreferrer">{t('Open or download resource')}</a>}
+          {material.fileName && <DownloadMaterialButton materialId={id} fileName={material.fileName} label="Open or download resource" />}
         </div>
       </article>}
       {!loading && !error && !material && <div className="alert alert-warning">{t('The requested material was not found.')}</div>}

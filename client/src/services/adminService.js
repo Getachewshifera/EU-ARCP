@@ -68,12 +68,23 @@ const adminService = {
     return api.get('/materials', { params })
   },
 
-  getMaterialFile(id) {
-    return api.get(`/materials/${encodeURIComponent(id)}/file`, { responseType: 'blob' })
+  async getMaterialFile(id) {
+    const path = `/materials/${encodeURIComponent(id)}`
+    const response = await api.get(`${path}/download`)
+    const payload = response?.data?.data ?? response?.data
+    if (payload?.legacy) return api.get(`${path}/file`, { responseType: 'blob' })
+    if (!payload?.url) throw new Error('The server did not return a temporary download link.')
+    const fileResponse = await fetch(payload.url)
+    if (!fileResponse.ok) throw new Error('Unable to load the material file.')
+    return { data: await fileResponse.blob() }
   },
 
   updateMaterial(id, updates) {
     return api.patch(`/materials/${encodeURIComponent(id)}`, updates)
+  },
+
+  deleteMaterial(id) {
+    return api.delete(`/materials/${encodeURIComponent(id)}`)
   },
 
   getReports(params) {

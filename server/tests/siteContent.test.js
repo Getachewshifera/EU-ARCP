@@ -3,6 +3,7 @@ const test = require('node:test');
 const { validateAppearance } = require('../validators/siteSettingsValidator');
 const { validatePostInput } = require('../validators/postValidator');
 const { validateMaintenance } = require('../validators/maintenanceValidator');
+const University = require('../models/University');
 
 test('appearance validation accepts only six-digit hex colors', () => {
   assert.deepEqual(validateAppearance({
@@ -23,6 +24,17 @@ test('appearance validation accepts only six-digit hex colors', () => {
     customCss: 'body {}',
   }).error, /only/);
 })
+
+test('university records accept HTTP(S) websites and reject invalid URLs', async () => {
+  const valid = new University({ name: 'Example University', website: 'https://example.edu' });
+  await assert.doesNotReject(valid.validate());
+
+  const invalid = new University({ name: 'Example University', website: 'ftp://example.edu' });
+  await assert.rejects(invalid.validate(), (error) => {
+    assert.equal(error.errors.website.message, 'Website must be a valid HTTP or HTTPS URL.');
+    return true;
+  });
+});
 
 test('maintenance settings require an explicit boolean and bounded user message', () => {
   assert.deepEqual(validateMaintenance({ enabled: true, message: 'We will be right back.' }).value, {

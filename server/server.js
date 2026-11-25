@@ -3,6 +3,7 @@ const cors = require('cors');
 const express = require('express');
 
 const { PORT, CLIENT_ORIGIN, MONGODB_URI } = require('./config/environment');
+const { verifyStorageConnection } = require('./config/storage');
 const { connectDatabase } = require('./config/database');
 const mongoose = require('mongoose');
 const { seedUniversities } = require('./seeders/universitySeeder');
@@ -77,6 +78,7 @@ async function startServer() {
     if ((process.env.JWT_SECRET || '').trim().length < 32) {
       throw new Error('JWT_SECRET must contain at least 32 characters.');
     }
+    await verifyStorageConnection();
     await connectDatabase(MONGODB_URI);
     await seedUniversities();
     app.listen(PORT, () => {

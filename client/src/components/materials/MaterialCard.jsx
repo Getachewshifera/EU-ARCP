@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import useLanguage from '../../hooks/useLanguage.js'
 
-function MaterialCard({ material, to, onDownload }) {
+function MaterialCard({ material, to }) {
   const { t, language } = useLanguage()
   const id = material?._id ?? material?.id
   const detailPath = to || (id ? `/materials/${id}` : '/login')
@@ -30,9 +30,6 @@ function MaterialCard({ material, to, onDownload }) {
           </div>
           <div className="d-flex gap-2">
             <Link className="btn btn-sm btn-outline-primary" to={detailPath}>{t('Details')}</Link>
-            {material?.fileUrl && onDownload && (
-              <a className="btn btn-sm btn-primary" href={material.fileUrl} onClick={onDownload} rel="noreferrer" target="_blank">{t('Open')}</a>
-            )}
           </div>
         </div>
       </div>

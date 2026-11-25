@@ -1,8 +1,10 @@
 // Purpose: Administrative table of submitted materials.
 import AdminDataTable from './AdminDataTable.jsx'
 import { displayValue, formatAdminDate } from './adminData.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
-function MaterialTable({ materials = [], onReview, onView, busyId = '' }) {
+function MaterialTable({ materials = [], onReview, onView, onEdit, onDelete, busyId = '' }) {
+  const { t } = useLanguage()
   const columns = [
     { key: 'title', label: 'Title' },
     { key: 'category', label: 'Category', render: (material) => displayValue(material.category) },
@@ -23,8 +25,27 @@ function MaterialTable({ materials = [], onReview, onView, busyId = '' }) {
               onClick={() => onView(material)}
               type="button"
             >
-              View
+              {t('View')}
             </button>
+            {onEdit && (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => onEdit(material)}
+                type="button"
+              >
+                {t('Edit')}
+              </button>
+            )}
+            {onDelete && (
+              <button
+                className="btn btn-sm btn-outline-danger"
+                disabled={busyId === id}
+                onClick={() => onDelete(material)}
+                type="button"
+              >
+                {t('Delete')}
+              </button>
+            )}
             {pending && (
               <button
                 className="btn btn-sm btn-success"
@@ -32,7 +53,7 @@ function MaterialTable({ materials = [], onReview, onView, busyId = '' }) {
                 onClick={() => onReview(material, 'approved')}
                 type="button"
               >
-                Approve
+                {t('Approve')}
               </button>
             )}
             <button
@@ -41,7 +62,7 @@ function MaterialTable({ materials = [], onReview, onView, busyId = '' }) {
               onClick={() => onReview(material, 'rejected')}
               type="button"
             >
-              Reject
+              {t('Reject')}
             </button>
           </div>
         )

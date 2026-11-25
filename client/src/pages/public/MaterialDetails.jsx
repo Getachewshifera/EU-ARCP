@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Navbar from '../../components/layout/Navbar.jsx'
 import useLanguage from '../../hooks/useLanguage.js'
+import useAuth from '../../hooks/useAuth.js'
+import DownloadMaterialButton from '../../components/materials/DownloadMaterialButton.jsx'
 import materialService from '../../services/materialService.js'
 
 function MaterialDetails() {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
   const { id } = useParams()
   const [material, setMaterial] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -55,7 +58,9 @@ function MaterialDetails() {
                 <dt className="col-sm-3">{t('Course')}</dt><dd className="col-sm-9">{material.course?.title || material.course || '—'}</dd>
                 <dt className="col-sm-3">{t('File type')}</dt><dd className="col-sm-9">{material.fileType || material.mimeType || '—'}</dd>
               </dl>
-              {material.fileUrl && <a className="btn btn-primary" href={material.fileUrl} rel="noreferrer" target="_blank">{t('Open material')}</a>}
+              {isAuthenticated
+                ? <DownloadMaterialButton materialId={id} fileName={material.fileName} label="Open or download resource" />
+                : <Link className="btn btn-primary" to="/login">{t('Sign in to download')}</Link>}
             </div>
           </article>
         ) : (

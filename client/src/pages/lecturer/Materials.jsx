@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import MaterialFilters from '../../components/materials/MaterialFilters.jsx'
+import DownloadMaterialButton from '../../components/materials/DownloadMaterialButton.jsx'
 import lecturerService from '../../services/lecturerService.js'
 import { PageHeader, RequestState } from '../../components/portal/lecturer/LecturerUI.jsx'
 import { errorMessage, itemId, listFrom, unwrap } from '../../components/portal/lecturer/lecturerUtils.js'
@@ -10,16 +12,21 @@ function LecturerMaterials() {
   const [materials, setMaterials] = useState([])
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState({ category: '', university: '', department: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   const load = useCallback(async (term = search) => {
+    setLoading(true)
     try {
-      const result = unwrap(await lecturerService.listMaterials({ search: term || undefined }))
+      const result = unwrap(await lecturerService.listMaterials({
+        search: term || undefined,
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value)),
+      }))
       setMaterials(listFrom(result, 'materials'))
     } catch (requestError) { setError(errorMessage(requestError, 'Unable to load materials.')) }
     finally { setLoading(false) }
-  }, [search])
+  }, [filters, search])
 
   useEffect(() => { void Promise.resolve().then(load) }, [load])
 
@@ -42,6 +49,7 @@ function LecturerMaterials() {
         <div className="col-sm"><label className="visually-hidden" htmlFor="material-search">{t('Search materials')}</label><input id="material-search" className="form-control" placeholder={t('Search by title or keyword')} value={query} onChange={(event) => setQuery(event.target.value)} /></div>
         <div className="col-auto"><button className="btn btn-outline-primary" type="submit">{t('Search')}</button></div>
       </form>
+      <MaterialFilters filters={filters} onChange={setFilters} />
       <RequestState error={error} loading={loading} onRetry={refresh} />
       {!loading && !error && (materials.length ? <div className="row g-3">
         {materials.map((material, index) => <div className="col-md-6 col-xl-4" key={itemId(material) ?? index}>
@@ -54,7 +62,7 @@ function LecturerMaterials() {
               <p className="text-secondary">{material.description || t('No description provided.')}</p>
               <div className="small text-secondary">{material.category || material.subject || 'Uncategorized'}{material.createdAt ? ` · ${new Date(material.createdAt).toLocaleDateString()}` : ''}</div>
             </div>
-            {material.fileUrl && <div className="card-footer bg-white"><a href={material.fileUrl} target="_blank" rel="noreferrer">{t('Open resource')}</a></div>}
+            <div className="card-footer bg-white"><DownloadMaterialButton materialId={itemId(material)} fileName={material.fileName} label="Open resource" /></div>
           </article>
         </div>)}
       </div> : <div className="card"><div className="card-body"><p className="text-secondary mb-0">{t('No materials matched your search.')}</p></div></div>)}

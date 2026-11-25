@@ -16,6 +16,9 @@ const config = {
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   MONGODB_URI: (process.env.MONGODB_URI || '').trim(),
   JWT_SECRET: process.env.JWT_SECRET || '',
+  SUPABASE_URL: (process.env.SUPABASE_URL || '').trim(),
+  SUPABASE_SERVICE_ROLE_KEY: (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
+  SUPABASE_BUCKET: (process.env.SUPABASE_BUCKET || '').trim(),
   PUBLIC_API_URL: (process.env.PUBLIC_API_URL || `http://localhost:${Number(process.env.PORT) || 5000}`).replace(/\/+$/, ''),
   NODE_ENV: process.env.NODE_ENV || 'development',
 };

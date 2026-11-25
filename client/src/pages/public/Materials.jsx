@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialCard from '../../components/materials/MaterialCard.jsx'
+import MaterialFilters from '../../components/materials/MaterialFilters.jsx'
 import Navbar from '../../components/layout/Navbar.jsx'
 import useLanguage from '../../hooks/useLanguage.js'
 import materialService from '../../services/materialService.js'
@@ -16,6 +17,7 @@ function Materials() {
   const { t } = useLanguage()
   const [materials, setMaterials] = useState([])
   const [query, setQuery] = useState('')
+  const [filters, setFilters] = useState({ category: '', university: '', department: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -23,14 +25,17 @@ function Materials() {
     setLoading(true)
     setError('')
     try {
-      const response = await materialService.list({ search: query.trim() || undefined })
+      const response = await materialService.list({
+        search: query.trim() || undefined,
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value)),
+      })
       setMaterials(getMaterialItems(response))
     } catch (requestError) {
       setError(requestError.response?.data?.message || requestError.message || 'Unable to load learning materials.')
     } finally {
       setLoading(false)
     }
-  }, [query])
+  }, [filters, query])
 
   useEffect(() => {
     const timeout = window.setTimeout(loadMaterials, 250)
@@ -59,6 +64,7 @@ function Materials() {
             value={query}
           />
         </div>
+        <MaterialFilters filters={filters} onChange={setFilters} />
         {error && <div className="alert alert-danger" role="alert">{error}</div>}
         {loading ? (
           <div className="text-secondary" role="status">{t('Loading resources…')}</div>

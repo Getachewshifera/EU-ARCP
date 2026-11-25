@@ -9,7 +9,6 @@ function getFieldDefaultValue(field) {
     return Array.isArray(field.defaultValue) ? [...field.defaultValue] : field.defaultValue
   }
   if (field.type === 'checkbox') return false
-  if (field.type === 'multiselect') return []
   return ''
 }
 
@@ -53,7 +52,7 @@ function AdminResourcePage({
     setError('')
 
     try {
-      const response = await adminService.listResource(resource)
+      const response = await adminService.listResource(resource, { limit: 500 })
       setRows(getItems(response))
     } catch (requestError) {
       setError(t(requestError.response?.data?.message || requestError.message || 'Unable to load records.'))
@@ -67,7 +66,7 @@ function AdminResourcePage({
 
     async function loadInitialResource() {
       try {
-        const response = await adminService.listResource(resource)
+        const response = await adminService.listResource(resource, { limit: 500 })
         if (active) setRows(getItems(response))
       } catch (requestError) {
         if (active) {
@@ -103,7 +102,6 @@ function AdminResourcePage({
     }
 
     if (optionResources.length > 0) loadFieldOptions()
-    else setFieldOptions({})
 
     return () => { active = false }
   }, [optionResources, t])
@@ -128,9 +126,6 @@ function AdminResourcePage({
     setForm(Object.fromEntries(fields.map((field) => {
       const value = row[field.name]
       if (field.type === 'checkbox') return [field.name, Boolean(value)]
-      if (field.type === 'multiselect') {
-        return [field.name, Array.isArray(value) ? value.map(getOptionValue) : []]
-      }
       return [field.name, value == null ? getFieldDefaultValue(field) : getOptionValue(value)]
     })))
     setError('')
@@ -176,11 +171,28 @@ function AdminResourcePage({
       await adminService.deleteResource(resource, id)
       await load()
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to delete this record.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to delete this record.'))
     }
   }
 
-  const tableColumns = columns ?? fields.map(({ name, label }) => ({ key: name, label }))
+  const tableColumns = columns ?? fields.map((field) => ({
+    key: field.name,
+    label: field.label,
+    render: (row) => {
+      const value = row[field.name]
+      if (field.optionsResource && value != null) {
+        const values = Array.isArray(value) ? value : [value]
+        const options = fieldOptions[field.optionsResource] || []
+        const labels = values.map((entry) => {
+          const option = options.find((item) => getRecordId(item) === getOptionValue(entry))
+          return option ? getOptionLabel(option, field.optionLabel) : displayValue(entry)
+        }).filter(Boolean)
+        return labels.join(', ') || '—'
+      }
+      if (field.type === 'checkbox') return t(value ? 'Yes' : 'No')
+      return displayValue(value)
+    },
+  }))
 
   return (
     <section>
@@ -211,9 +223,11 @@ function AdminResourcePage({
           <div className="row g-3">
             {fields.map((field) => (
               <div className={field.type === 'textarea' ? 'col-12' : 'col-md-6'} key={field.name}>
-                <label className="form-label" htmlFor={`${resource}-${field.name}`}>
-                  {t(field.label)}
-                </label>
+                {field.type !== 'checkbox' && (
+                  <label className="form-label" htmlFor={`${resource}-${field.name}`}>
+                    {t(field.label)}
+                  </label>
+                )}
                 {field.type === 'select' ? (
                   (() => {
                     const options = field.optionsResource ? fieldOptions[field.optionsResource] || [] : field.options || []
@@ -224,7 +238,10 @@ function AdminResourcePage({
                     return (
                   <select
                     className="form-select"
-                    disabled={Boolean(field.dependsOn && !parentValue)}
+                    disabled={Boolean(
+                      (field.dependsOn && !parentValue)
+                      || (field.optionsResource && !Array.isArray(fieldOptions[field.optionsResource])),
+                    )}
                     id={`${resource}-${field.name}`}
                     required={field.required}
                     value={form[field.name] ?? ''}
@@ -239,22 +256,6 @@ function AdminResourcePage({
                   </select>
                     )
                   })()
-                ) : field.type === 'multiselect' ? (
-                  <select
-                    className="form-select"
-                    id={`${resource}-${field.name}`}
-                    multiple
-                    required={field.required}
-                    size={Math.min(6, Math.max(3, (fieldOptions[field.optionsResource]?.length || field.options?.length || 0)))}
-                    value={form[field.name] ?? []}
-                    onChange={(event) => updateField(field.name, Array.from(event.target.selectedOptions, (option) => option.value))}
-                  >
-                    {(field.optionsResource ? fieldOptions[field.optionsResource] || [] : field.options || []).map((option) => {
-                      const value = field.optionsResource ? getRecordId(option) : option.value
-                      const label = field.optionsResource ? getOptionLabel(option, field.optionLabel) : option.label
-                      return <option key={value} value={value}>{t(label)}</option>
-                    })}
-                  </select>
                 ) : field.type === 'checkbox' ? (
                   <div className="form-check">
                     <input
@@ -332,10 +333,10 @@ function AdminResourcePage({
             actions={(row) => (
               <>
                 <button className="btn btn-sm btn-outline-primary me-2" onClick={() => startEdit(row)} type="button">
-                  Edit
+                  {t('Edit')}
                 </button>
                 <button className="btn btn-sm btn-outline-danger" onClick={() => deleteRecord(row)} type="button">
-                  Delete
+                  {t('Delete')}
                 </button>
               </>
             )}

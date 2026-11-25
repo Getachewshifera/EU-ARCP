@@ -21,7 +21,7 @@ async function authMiddleware(request, response, next) {
   }
 
   const user = await User.findById(claims.sub)
-    .select('_id name email role status isActive approvalStatus emailVerified mustChangePassword');
+    .select('_id name email role status isActive approvalStatus emailVerified mustChangePassword university department');
   if (!user) {
     return response.status(401).json({ message: 'The account for this token no longer exists.' });
   }
