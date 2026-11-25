@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialCard from '../../components/materials/MaterialCard.jsx'
 import Navbar from '../../components/layout/Navbar.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 import materialService from '../../services/materialService.js'
 
 function getMaterialItems(response) {
@@ -12,6 +13,7 @@ function getMaterialItems(response) {
 }
 
 function Materials() {
+  const { t } = useLanguage()
   const [materials, setMaterials] = useState([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
@@ -41,25 +43,25 @@ function Materials() {
       <main className="container py-5">
         <div className="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
           <div>
-            <h1 className="h2 mb-1">Learning resources</h1>
-            <p className="text-secondary mb-0">Discover materials shared by the academic community.</p>
+            <h1 className="h2 mb-1">{t('Learning resources')}</h1>
+            <p className="text-secondary mb-0">{t('Discover materials shared by the academic community.')}</p>
           </div>
-          <Link className="btn btn-primary" to="/login">Sign in to contribute</Link>
+          <Link className="btn btn-primary" to="/login">{t('Sign in to contribute')}</Link>
         </div>
         <div className="mb-4">
-          <label className="form-label" htmlFor="public-material-search">Search resources</label>
+          <label className="form-label" htmlFor="public-material-search">{t('Search resources')}</label>
           <input
             className="form-control"
             id="public-material-search"
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search titles and descriptions"
+            placeholder={t('Search titles and descriptions')}
             type="search"
             value={query}
           />
         </div>
         {error && <div className="alert alert-danger" role="alert">{error}</div>}
         {loading ? (
-          <div className="text-secondary" role="status">Loading resources…</div>
+          <div className="text-secondary" role="status">{t('Loading resources…')}</div>
         ) : materials.length ? (
           <div className="row g-3">
             {materials.map((material, index) => (
@@ -70,7 +72,7 @@ function Materials() {
           </div>
         ) : (
           <div className="card card-body text-center text-secondary py-5">
-            No learning materials are available{query ? ' for this search' : ' yet'}.
+            {t(query ? 'No learning materials are available for this search.' : 'No learning materials are available yet.')}
           </div>
         )}
       </main>

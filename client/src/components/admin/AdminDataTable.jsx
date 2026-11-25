@@ -1,4 +1,5 @@
 import { displayValue } from './adminData.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function AdminDataTable({
   rows = [],
@@ -7,6 +8,8 @@ function AdminDataTable({
   emptyMessage = 'No records found.',
   rowKey,
 }) {
+  const { t } = useLanguage()
+
   return (
     <div className="table-responsive">
       <table className="table table-hover align-middle mb-0">
@@ -14,10 +17,10 @@ function AdminDataTable({
           <tr>
             {columns.map((column) => (
               <th key={column.key} scope="col">
-                {column.label}
+                {t(column.label)}
               </th>
             ))}
-            {actions && <th scope="col" className="text-end">Actions</th>}
+            {actions && <th scope="col" className="text-end">{t('Actions')}</th>}
           </tr>
         </thead>
         <tbody>
@@ -27,7 +30,7 @@ function AdminDataTable({
                 className="py-5 text-center text-secondary"
                 colSpan={columns.length + (actions ? 1 : 0)}
               >
-                {emptyMessage}
+                {t(emptyMessage)}
               </td>
             </tr>
           ) : rows.map((row, index) => (

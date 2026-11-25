@@ -1,5 +1,6 @@
 // Purpose: Reusable, labeled form input with automatic password show/hide eye toggle.
 import { useState } from 'react'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function Input({
   id,
@@ -9,17 +10,19 @@ function Input({
   onChange,
   error,
   hint,
+  placeholder,
   className = '',
   ...props
 }) {
   const [showPassword, setShowPassword] = useState(false)
+  const { t } = useLanguage()
   const inputId = id || props.name
   const isPassword = type === 'password'
   const computedType = isPassword ? (showPassword ? 'text' : 'password') : type
 
   return (
     <div className={className}>
-      {label && <label className="form-label" htmlFor={inputId}>{label}</label>}
+      {label && <label className="form-label" htmlFor={inputId}>{t(label)}</label>}
       <div className={isPassword ? 'position-relative password-input-wrapper' : undefined}>
         <input
           aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
@@ -30,14 +33,15 @@ function Input({
           type={computedType}
           value={value}
           {...props}
+          placeholder={t(placeholder)}
         />
         {isPassword && (
           <button
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={t(showPassword ? 'Hide password' : 'Show password')}
             className="password-toggle-btn"
             onClick={() => setShowPassword((prev) => !prev)}
             tabIndex="-1"
-            title={showPassword ? 'Hide password' : 'Show password'}
+            title={t(showPassword ? 'Hide password' : 'Show password')}
             type="button"
           >
             {showPassword ? (
@@ -54,8 +58,8 @@ function Input({
           </button>
         )}
       </div>
-      {error && <div className="invalid-feedback" id={`${inputId}-error`}>{error}</div>}
-      {!error && hint && <div className="form-text" id={`${inputId}-hint`}>{hint}</div>}
+      {error && <div className="invalid-feedback" id={`${inputId}-error`}>{t(error)}</div>}
+      {!error && hint && <div className="form-text" id={`${inputId}-hint`}>{t(hint)}</div>}
     </div>
   )
 }

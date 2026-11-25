@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import lecturerService from '../../services/lecturerService.js'
 import { EmptyState, PageHeader, RequestState } from '../../components/portal/lecturer/LecturerUI.jsx'
 import { errorMessage, itemId, listFrom, unwrap } from '../../components/portal/lecturer/lecturerUtils.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function LecturerGroups() {
+  const { t } = useLanguage()
   const [groups, setGroups] = useState([])
   const [form, setForm] = useState({ name: '', description: '' })
   const [loading, setLoading] = useState(true)
@@ -29,49 +31,49 @@ function LecturerGroups() {
     try {
       await lecturerService.createGroup(form)
       setForm({ name: '', description: '' })
-      setNotice('Group created.')
+      setNotice(t('Group created.'))
       await load()
-    } catch (requestError) { setError(errorMessage(requestError, 'Unable to create the group.')) }
+    } catch (requestError) { setError(errorMessage(requestError, t('Unable to create the group.'))) }
     finally { setSaving(false) }
   }
 
   async function deleteGroup(group) {
     const id = itemId(group)
-    if (id == null || !window.confirm(`Delete “${group.name || group.title || 'this group'}”?`)) return
+    if (id == null || !window.confirm(`${t('Delete')} “${group.name || group.title || t('this group')}”?`)) return
     setError(''); setNotice('')
     try {
       await lecturerService.deleteGroup(id)
-      setNotice('Group deleted.')
+      setNotice(t('Group deleted.'))
       await load()
-    } catch (requestError) { setError(errorMessage(requestError, 'Unable to delete the group.')) }
+    } catch (requestError) { setError(errorMessage(requestError, t('Unable to delete the group.'))) }
   }
 
   return (
     <section>
       <PageHeader title="Teaching groups" description="Create and manage your lecturer groups." />
-      {error && <div className="alert alert-danger" role="alert">{error}</div>}
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
+      {error && <div className="alert alert-danger" role="alert">{t(error)}</div>}
+      {notice && <div className="alert alert-success" role="status">{t(notice)}</div>}
       <form className="card mb-4" onSubmit={createGroup}>
-        <div className="card-header bg-white"><h2 className="h5 mb-0">Create a group</h2></div>
+        <div className="card-header bg-white"><h2 className="h5 mb-0">{t('Create a group')}</h2></div>
         <div className="card-body"><div className="row g-3">
-          <div className="col-md-4"><label className="form-label" htmlFor="group-name">Group name</label><input id="group-name" className="form-control" required maxLength="120" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
-          <div className="col-md-8"><label className="form-label" htmlFor="group-description">Description</label><input id="group-description" className="form-control" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
+          <div className="col-md-4"><label className="form-label" htmlFor="group-name">{t('Group name')}</label><input id="group-name" className="form-control" required maxLength="120" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
+          <div className="col-md-8"><label className="form-label" htmlFor="group-description">{t('Description')}</label><input id="group-description" className="form-control" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
         </div></div>
-        <div className="card-footer bg-white text-end"><button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create group'}</button></div>
+        <div className="card-footer bg-white text-end"><button className="btn btn-primary" type="submit" disabled={saving}>{t(saving ? 'Creating…' : 'Create group')}</button></div>
       </form>
       <RequestState error={error && loading ? error : ''} loading={loading} onRetry={refresh} />
       {!loading && !error && (groups.length ? <div className="row g-3">
         {groups.map((group, index) => <div className="col-md-6 col-xl-4" key={itemId(group) ?? index}>
           <article className="card h-100"><div className="card-body">
-            <h2 className="h5">{itemId(group) != null ? <Link className="text-decoration-none" to={`/lecturer/groups/${itemId(group)}`}>{group.name || group.title || 'Untitled group'}</Link> : group.name || group.title || 'Untitled group'}</h2>
-            <p className="text-secondary">{group.description || 'No description provided.'}</p>
-            {group.memberCount != null && <span className="small text-secondary">{group.memberCount} members</span>}
+            <h2 className="h5">{itemId(group) != null ? <Link className="text-decoration-none" to={`/lecturer/groups/${itemId(group)}`}>{group.name || group.title || t('Untitled group')}</Link> : group.name || group.title || t('Untitled group')}</h2>
+            <p className="text-secondary">{group.description || t('No description provided.')}</p>
+            {group.memberCount != null && <span className="small text-secondary">{group.memberCount} {t('members')}</span>}
           </div><div className="card-footer bg-white d-flex justify-content-between gap-2">
-            {itemId(group) != null ? <Link className="btn btn-sm btn-outline-primary" to={`/lecturer/groups/${itemId(group)}`}>Open group</Link> : <span />}
-            {itemId(group) != null && <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => deleteGroup(group)}>Delete</button>}
+            {itemId(group) != null ? <Link className="btn btn-sm btn-outline-primary" to={`/lecturer/groups/${itemId(group)}`}>{t('Open group')}</Link> : <span />}
+            {itemId(group) != null && <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => deleteGroup(group)}>{t('Delete')}</button>}
           </div></article>
         </div>)}
-      </div> : <div className="card"><EmptyState title="No groups found">Create a group to start organizing discussions and students.</EmptyState></div>)}
+      </div> : <div className="card"><EmptyState title={t('No groups found')}>{t('Create a group to start organizing discussions and students.')}</EmptyState></div>)}
     </section>
   )
 }

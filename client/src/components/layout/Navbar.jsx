@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
+import useLanguage from '../../hooks/useLanguage.js'
+import LanguageToggle from '../common/LanguageToggle.jsx'
 import ThemeToggle from '../common/ThemeToggle.jsx'
 
 function Navbar() {
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
   const [expanded, setExpanded] = useState(false)
 
   function handleLogout() {
@@ -43,7 +46,7 @@ function Navbar() {
       <div className="container">
         <Link className="navbar-brand d-inline-flex align-items-center gap-2 fw-bold text-primary" to="/">
           <img
-            alt="EU-ARCP Logo"
+            alt={t('EU-ARCP Logo')}
             className="navbar-logo"
             src="/image.png"
             style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
@@ -53,7 +56,7 @@ function Navbar() {
         <button
           aria-controls="site-navigation"
           aria-expanded={expanded}
-          aria-label="Toggle navigation"
+          aria-label={t('Toggle navigation')}
           className="navbar-toggler"
           onClick={() => setExpanded((current) => !current)}
           type="button"
@@ -62,22 +65,23 @@ function Navbar() {
         </button>
         <div className={`navbar-collapse${expanded ? ' d-block' : ' d-none'} d-lg-flex`} id="site-navigation">
           <div className="navbar-nav ms-auto align-items-lg-center gap-2">
-            <Link className="nav-link" onClick={handleHomeClick} to="/">Home</Link>
-            <Link className="nav-link" onClick={(e) => handleSectionNavigation(e, 'about')} to="/#about">About</Link>
-            <Link className="nav-link" onClick={(e) => handleSectionNavigation(e, 'features')} to="/#features">Features</Link>
-            <Link className="nav-link" onClick={(e) => handleSectionNavigation(e, 'how-it-works')} to="/#how-it-works">How It Works</Link>
-            <Link className="nav-link" onClick={() => setExpanded(false)} to="/contact">Contact</Link>
+            <Link className="nav-link" onClick={handleHomeClick} to="/">{t('Home')}</Link>
+            <Link className="nav-link" onClick={(e) => handleSectionNavigation(e, 'about')} to="/#about">{t('About')}</Link>
+            <Link className="nav-link" onClick={(e) => handleSectionNavigation(e, 'features')} to="/#features">{t('Features')}</Link>
+            <Link className="nav-link" onClick={(e) => handleSectionNavigation(e, 'how-it-works')} to="/#how-it-works">{t('How It Works')}</Link>
+            <Link className="nav-link" onClick={() => setExpanded(false)} to="/contact">{t('Contact')}</Link>
             {isAuthenticated ? (
               <>
-                <Link className="nav-link" to={`/${user?.role || 'student'}`}>Dashboard</Link>
-                <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout} type="button">Sign out</button>
+                <Link className="nav-link" to={`/${user?.role || 'student'}`}>{t('Dashboard')}</Link>
+                <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout} type="button">{t('Sign out')}</button>
               </>
             ) : (
               <>
-                <Link className="nav-link" to="/login">Sign in</Link>
-                <Link className="btn btn-primary btn-sm" to="/register">Create account</Link>
+                <Link className="nav-link" to="/login">{t('Sign in')}</Link>
+                <Link className="btn btn-primary btn-sm" to="/register">{t('Create account')}</Link>
               </>
             )}
+            <LanguageToggle />
             <ThemeToggle className="ms-lg-2" size="sm" />
           </div>
         </div>

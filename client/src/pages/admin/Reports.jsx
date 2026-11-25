@@ -4,8 +4,10 @@ import AdminListPage from '../../components/admin/AdminListPage.jsx'
 import ReportTable from '../../components/admin/ReportTable.jsx'
 import useAdminRecords from '../../hooks/useAdminRecords.js'
 import adminService from '../../services/adminService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function Reports() {
+  const { t } = useLanguage()
   const { records, loading, busyId, error, reload, runAction } = useAdminRecords(adminService.getReports)
   const [status, setStatus] = useState('open')
   const reports = useMemo(
@@ -28,11 +30,11 @@ function Reports() {
       toolbar={(
         <>
           <span className="fw-semibold">{reports.length} reports</span>
-          <select aria-label="Filter reports by status" className="form-select" onChange={(event) => setStatus(event.target.value)} value={status}>
-            <option value="open">Open</option>
-            <option value="resolved">Resolved</option>
-            <option value="dismissed">Dismissed</option>
-            <option value="">All statuses</option>
+          <select aria-label={t('Filter reports by status')} className="form-select" onChange={(event) => setStatus(event.target.value)} value={status}>
+            <option value="open">{t('Open')}</option>
+            <option value="resolved">{t('Resolved')}</option>
+            <option value="dismissed">{t('Dismissed')}</option>
+            <option value="">{t('All statuses')}</option>
           </select>
         </>
       )}

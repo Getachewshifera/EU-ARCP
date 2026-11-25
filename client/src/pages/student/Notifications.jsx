@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react'
 import studentService from '../../services/studentService.js'
 import { asList, formatDate, getErrorMessage, getRecordId } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState, EmptyState, Notice } from '../../components/portal/student/StudentUi.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 
 export default function Notifications() {
+  const { t } = useLanguage()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -38,7 +40,7 @@ export default function Notifications() {
     try {
       await studentService.markNotificationRead(id)
       setNotifications((current) => current.map((item) => getRecordId(item) === id ? { ...item, read: true, isRead: true } : item))
-      setNotice('Notification marked as read.')
+      setNotice(t('Notification marked as read.'))
     } catch (requestError) {
       setError(getErrorMessage(requestError))
     } finally {
@@ -49,9 +51,9 @@ export default function Notifications() {
   return (
     <main className="container py-4">
       <PageHeader title="Notifications" description="Important updates and activity related to your account." />
-      {notice && <Notice>{notice}</Notice>}
-      {loading ? <LoadingState label="Loading notifications…" /> : error ? <ErrorState message={error} onRetry={retryNotifications} /> : notifications.length === 0
-        ? <EmptyState title="You are all caught up" description="New notifications will appear here." />
+      {notice && <Notice>{t(notice)}</Notice>}
+      {loading ? <LoadingState label={t('Loading notifications…')} /> : error ? <ErrorState message={t(error)} onRetry={retryNotifications} /> : notifications.length === 0
+        ? <EmptyState title={t('You are all caught up')} description={t('New notifications will appear here.')} />
         : <div className="list-group">
           {notifications.map((notification, index) => {
             const id = getRecordId(notification)
@@ -60,14 +62,14 @@ export default function Notifications() {
               <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3">
                 <div className="flex-grow-1">
                   <div className="d-flex gap-2 align-items-center">
-                    <h2 className="h6 mb-1">{notification.title || notification.subject || 'Notification'}</h2>
-                    {!isRead && <span className="badge text-bg-primary">New</span>}
+                    <h2 className="h6 mb-1">{notification.title || notification.subject || t('Notification')}</h2>
+                    {!isRead && <span className="badge text-bg-primary">{t('New')}</span>}
                   </div>
                   <p className="mb-1">{notification.message || notification.body || notification.description || ''}</p>
                   {notification.createdAt && <time className="small text-body-secondary" dateTime={notification.createdAt}>{formatDate(notification.createdAt)}</time>}
                 </div>
                 {!isRead && id && <button className="btn btn-sm btn-outline-primary align-self-start" type="button" disabled={updating === id} onClick={() => markRead(notification)}>
-                  {updating === id ? 'Updating…' : 'Mark as read'}
+                  {t(updating === id ? 'Updating…' : 'Mark as read')}
                 </button>}
               </div>
             </article>

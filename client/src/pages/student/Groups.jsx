@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import studentService from '../../services/studentService.js'
 import { asList, getErrorMessage, getRecordId, getRecordTitle } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState, EmptyState } from '../../components/portal/student/StudentUi.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 
 export default function Groups() {
+  const { t } = useLanguage()
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,7 +52,7 @@ export default function Groups() {
       await studentService.createGroup(createForm)
       setCreateForm({ name: '', description: '', course: '', isPrivate: false })
       setCreating(false)
-      setNotice('Your group has been created.')
+      setNotice(t('Your group has been created.'))
       setLoading(true)
       await loadGroups()
     } catch (requestError) {
@@ -63,26 +65,26 @@ export default function Groups() {
   return (
     <main className="container py-4">
       <PageHeader title="Study groups" description="Discover groups for your courses and interests."
-        actions={<button type="button" className="btn btn-primary" onClick={() => setCreating(!creating)}>{creating ? 'Cancel' : 'Create group'}</button>} />
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
+        actions={<button type="button" className="btn btn-primary" onClick={() => setCreating(!creating)}>{t(creating ? 'Cancel' : 'Create group')}</button>} />
+      {notice && <div className="alert alert-success" role="status">{t(notice)}</div>}
       {creating && <form className="card mb-4" onSubmit={createGroup}>
         <div className="card-body">
-          <h2 className="h5">New group</h2>
-          <div className="mb-3"><label className="form-label" htmlFor="new-group-name">Group name</label>
+          <h2 className="h5">{t('New group')}</h2>
+          <div className="mb-3"><label className="form-label" htmlFor="new-group-name">{t('Group name')}</label>
             <input className="form-control" id="new-group-name" maxLength="160" required value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} /></div>
-          <div className="mb-3"><label className="form-label" htmlFor="new-group-course">Course</label>
+          <div className="mb-3"><label className="form-label" htmlFor="new-group-course">{t('Course')}</label>
             <input className="form-control" id="new-group-course" maxLength="160" value={createForm.course} onChange={(event) => setCreateForm({ ...createForm, course: event.target.value })} /></div>
-          <div className="mb-3"><label className="form-label" htmlFor="new-group-description">Description</label>
+          <div className="mb-3"><label className="form-label" htmlFor="new-group-description">{t('Description')}</label>
             <textarea className="form-control" id="new-group-description" maxLength="2000" rows="3" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} /></div>
           <div className="form-check mb-3"><input className="form-check-input" id="new-group-private" type="checkbox" checked={createForm.isPrivate} onChange={(event) => setCreateForm({ ...createForm, isPrivate: event.target.checked })} />
-            <label className="form-check-label" htmlFor="new-group-private">Private group</label></div>
-          <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create group'}</button>
+            <label className="form-check-label" htmlFor="new-group-private">{t('Private group')}</label></div>
+          <button className="btn btn-primary" type="submit" disabled={busy}>{t(busy ? 'Creating…' : 'Create group')}</button>
         </div>
       </form>}
       <form className="input-group mb-4" role="search" onSubmit={submitSearch}>
-        <label className="visually-hidden" htmlFor="group-search">Search groups</label>
-        <input id="group-search" className="form-control" type="search" placeholder="Search by group or course" value={search} onChange={(event) => setSearch(event.target.value)} />
-        <button className="btn btn-outline-primary" type="submit">Search</button>
+        <label className="visually-hidden" htmlFor="group-search">{t('Search groups')}</label>
+        <input id="group-search" className="form-control" type="search" placeholder={t('Search by group or course')} value={search} onChange={(event) => setSearch(event.target.value)} />
+        <button className="btn btn-outline-primary" type="submit">{t('Search')}</button>
       </form>
       {loading ? <LoadingState label="Loading groups…" /> : error ? <ErrorState message={error} onRetry={retryGroups} /> : groups.length === 0
         ? <EmptyState title={query ? 'No matching groups' : 'No groups available'} description={query ? 'Try a different search.' : 'Groups will appear here when they are available.'} />
@@ -95,14 +97,14 @@ export default function Groups() {
                 <div className="card-body">
                   <div className="d-flex justify-content-between gap-2 align-items-start">
                     <h2 className="h5">{getRecordTitle(group)}</h2>
-                    {joined && <span className="badge text-bg-success">Joined</span>}
+                    {joined && <span className="badge text-bg-success">{t('Joined')}</span>}
                   </div>
                   {(group.course || group.subject) && <p className="small text-body-secondary">{group.course || group.subject}</p>}
-                  <p>{group.description || 'No group description provided.'}</p>
-                  {group.memberCount !== undefined && <p className="small text-body-secondary mb-0">{group.memberCount} members</p>}
+                  <p>{group.description || t('No group description provided.')}</p>
+                  {group.memberCount !== undefined && <p className="small text-body-secondary mb-0">{group.memberCount} {t('members')}</p>}
                 </div>
                 <div className="card-footer bg-body">
-                  {id ? <Link className="btn btn-sm btn-outline-primary" to={`/student/groups/${encodeURIComponent(id)}`}>View group</Link> : <span className="small text-body-secondary">Group details unavailable</span>}
+                  {id ? <Link className="btn btn-sm btn-outline-primary" to={`/student/groups/${encodeURIComponent(id)}`}>{t('View group')}</Link> : <span className="small text-body-secondary">{t('Group details unavailable')}</span>}
                 </div>
               </article>
             </div>

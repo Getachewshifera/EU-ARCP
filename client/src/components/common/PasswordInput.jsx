@@ -1,5 +1,6 @@
 // Purpose: Reusable password input with show/hide eye toggle icon.
 import { useState } from 'react'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function PasswordInput({
   id,
@@ -17,16 +18,18 @@ function PasswordInput({
   inputClassName = '',
   error,
   hint,
+  title,
   ...props
 }) {
   const [showPassword, setShowPassword] = useState(false)
+  const { t } = useLanguage()
   const inputId = id || name
 
   return (
     <div className={className}>
       {label && (
         <label className="form-label" htmlFor={inputId}>
-          {label}
+          {t(label)}
         </label>
       )}
       <div className="position-relative password-input-wrapper">
@@ -40,18 +43,19 @@ function PasswordInput({
           minLength={minLength}
           name={name}
           onChange={onChange}
-          placeholder={placeholder}
+          placeholder={t(placeholder)}
           required={required}
           type={showPassword ? 'text' : 'password'}
+          title={t(title)}
           value={value}
           {...props}
         />
         <button
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          aria-label={t(showPassword ? 'Hide password' : 'Show password')}
           className="password-toggle-btn"
           onClick={() => setShowPassword((current) => !current)}
           tabIndex="-1"
-          title={showPassword ? 'Hide password' : 'Show password'}
+          title={t(showPassword ? 'Hide password' : 'Show password')}
           type="button"
         >
           {showPassword ? (
@@ -89,8 +93,8 @@ function PasswordInput({
           )}
         </button>
       </div>
-      {error && <div className="invalid-feedback d-block">{error}</div>}
-      {!error && hint && <div className="form-text">{hint}</div>}
+      {error && <div className="invalid-feedback d-block">{t(error)}</div>}
+      {!error && hint && <div className="form-text">{t(hint)}</div>}
     </div>
   )
 }

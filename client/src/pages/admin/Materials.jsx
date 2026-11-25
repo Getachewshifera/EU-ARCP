@@ -5,8 +5,10 @@ import MaterialTable from '../../components/admin/MaterialTable.jsx'
 import MaterialViewDialog from '../../components/admin/MaterialViewDialog.jsx'
 import useAdminRecords from '../../hooks/useAdminRecords.js'
 import adminService from '../../services/adminService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function Materials() {
+  const { t } = useLanguage()
   const { records, loading, busyId, error, reload, runAction } = useAdminRecords(adminService.getMaterials)
   const [status, setStatus] = useState('')
   const [viewingMaterial, setViewingMaterial] = useState(null)
@@ -30,11 +32,11 @@ function Materials() {
       toolbar={(
         <>
           <span className="fw-semibold">{materials.length} materials</span>
-          <select aria-label="Filter materials by status" className="form-select" onChange={(event) => setStatus(event.target.value)} value={status}>
-            <option value="">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+          <select aria-label={t('Filter materials by status')} className="form-select" onChange={(event) => setStatus(event.target.value)} value={status}>
+            <option value="">{t('All statuses')}</option>
+            <option value="pending">{t('Pending')}</option>
+            <option value="approved">{t('Approved')}</option>
+            <option value="rejected">{t('Rejected')}</option>
           </select>
         </>
       )}

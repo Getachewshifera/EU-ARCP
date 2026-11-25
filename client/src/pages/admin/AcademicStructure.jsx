@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AdminResourcePage from '../../components/admin/AdminResourcePage.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 
 const structures = {
   colleges: {
@@ -38,6 +39,7 @@ const structures = {
 }
 
 function AcademicStructure() {
+  const { t } = useLanguage()
   const [entity, setEntity] = useState('colleges')
   const structure = structures[entity]
 
@@ -45,17 +47,17 @@ function AcademicStructure() {
     <section>
       <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
         <div>
-          <h1 className="h3 mb-1">Academic structure</h1>
-          <p className="text-secondary mb-0">Manage colleges, departments, programs, and courses.</p>
+          <h1 className="h3 mb-1">{t('Academic structure')}</h1>
+          <p className="text-secondary mb-0">{t('Manage colleges, departments, programs, and courses.')}</p>
         </div>
         <select
-          aria-label="Academic structure type"
+          aria-label={t('Academic structure type')}
           className="form-select"
           onChange={(event) => setEntity(event.target.value)}
           value={entity}
         >
           {Object.entries(structures).map(([key, item]) => (
-            <option key={key} value={key}>{item.label}</option>
+            <option key={key} value={key}>{t(item.label)}</option>
           ))}
         </select>
       </div>

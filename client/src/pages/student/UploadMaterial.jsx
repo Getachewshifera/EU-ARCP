@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import studentService from '../../services/studentService.js'
 import { asEntity, getErrorMessage, getRecordId } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, Notice } from '../../components/portal/student/StudentUi.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 
 export default function UploadMaterial() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const formRef = useRef(null)
   const [form, setForm] = useState({ title: '', description: '', course: '', subject: '' })
@@ -18,7 +20,7 @@ export default function UploadMaterial() {
     setError('')
     setNotice('')
     if (!file) {
-      setError('Choose a file to upload.')
+      setError(t('Choose a file to upload.'))
       return
     }
     const data = new FormData()
@@ -30,7 +32,7 @@ export default function UploadMaterial() {
       const id = getRecordId(result)
       if (id) navigate(`/student/materials/${encodeURIComponent(id)}`)
       else {
-        setNotice('Your material was submitted.')
+        setNotice(t('Your material was submitted.'))
         setForm({ title: '', description: '', course: '', subject: '' })
         setFile(null)
         formRef.current?.reset()
@@ -45,42 +47,42 @@ export default function UploadMaterial() {
   return (
     <main className="container py-4">
       <PageHeader title="Upload a material" description="Share a course resource with other students."
-        actions={<Link className="btn btn-outline-secondary" to="/student/my-materials">My materials</Link>} />
+        actions={<Link className="btn btn-outline-secondary" to="/student/my-materials">{t('My materials')}</Link>} />
       {error && <Notice variant="danger">{error}</Notice>}
       <Notice>{notice}</Notice>
       <form ref={formRef} className="card shadow-sm" onSubmit={submit}>
         <div className="card-body">
           <div className="row g-3">
             <div className="col-12">
-              <label htmlFor="material-title" className="form-label">Title <span className="text-danger">*</span></label>
+              <label htmlFor="material-title" className="form-label">{t('Title')} <span className="text-danger">*</span></label>
               <input id="material-title" name="title" className="form-control" required maxLength="180" value={form.title}
                 onChange={(event) => setForm({ ...form, title: event.target.value })} />
             </div>
             <div className="col-12 col-md-6">
-              <label htmlFor="material-course" className="form-label">Course</label>
+              <label htmlFor="material-course" className="form-label">{t('Course')}</label>
               <input id="material-course" name="course" className="form-control" value={form.course}
                 onChange={(event) => setForm({ ...form, course: event.target.value })} />
             </div>
             <div className="col-12 col-md-6">
-              <label htmlFor="material-subject" className="form-label">Subject or topic</label>
+              <label htmlFor="material-subject" className="form-label">{t('Subject or topic')}</label>
               <input id="material-subject" name="subject" className="form-control" value={form.subject}
                 onChange={(event) => setForm({ ...form, subject: event.target.value })} />
             </div>
             <div className="col-12">
-              <label htmlFor="material-description" className="form-label">Description</label>
+              <label htmlFor="material-description" className="form-label">{t('Description')}</label>
               <textarea id="material-description" name="description" className="form-control" rows="4" value={form.description}
                 onChange={(event) => setForm({ ...form, description: event.target.value })} />
             </div>
             <div className="col-12">
-              <label htmlFor="material-file" className="form-label">File <span className="text-danger">*</span></label>
+              <label htmlFor="material-file" className="form-label">{t('File')} <span className="text-danger">*</span></label>
               <input id="material-file" name="file" className="form-control" type="file" required onChange={(event) => setFile(event.target.files?.[0] || null)} />
-              <div className="form-text">Select the resource file you want to share.</div>
+              <div className="form-text">{t('Select the resource file you want to share.')}</div>
             </div>
           </div>
         </div>
         <div className="card-footer bg-body d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
-          <Link to="/student/materials" className="link-secondary">Cancel</Link>
-          <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Uploading…' : 'Submit material'}</button>
+          <Link to="/student/materials" className="link-secondary">{t('Cancel')}</Link>
+          <button className="btn btn-primary" type="submit" disabled={saving}>{t(saving ? 'Uploading…' : 'Submit material')}</button>
         </div>
       </form>
     </main>

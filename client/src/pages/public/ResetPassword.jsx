@@ -5,9 +5,11 @@ import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
 import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 
 function ResetPassword() {
+  const { t } = useLanguage()
   const [searchParams] = useSearchParams()
   const initialEmail = searchParams.get('email') || ''
   const resetToken = searchParams.get('token') || ''
@@ -24,12 +26,12 @@ function ResetPassword() {
     event.preventDefault()
     setError('')
     if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match.')
+      setError(t('Passwords do not match.'))
       return
     }
     const passwordError = getPasswordPolicyError(form.password)
     if (passwordError) {
-      setError(passwordError)
+      setError(t(passwordError))
       return
     }
     setSubmitting(true)
@@ -41,7 +43,7 @@ function ResetPassword() {
       })
       setSuccess(true)
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to reset your password.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to reset your password.'))
     } finally {
       setSubmitting(false)
     }
@@ -52,12 +54,12 @@ function ResetPassword() {
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       {success ? (
         <div className="alert alert-success" role="status">
-          Your password has been updated. <Link to="/login">Sign in</Link>.
+          {t('Your password has been updated.')} <Link to="/login">{t('Sign in')}</Link>.
         </div>
       ) : (
         <form className="vstack gap-3" onSubmit={submit}>
           <div>
-            <label className="form-label" htmlFor="reset-email">Email address</label>
+            <label className="form-label" htmlFor="reset-email">{t('Email address')}</label>
             <input autoComplete="email" className="form-control" id="reset-email" name="email" onChange={update} required type="email" value={form.email} />
           </div>
           <PasswordInput

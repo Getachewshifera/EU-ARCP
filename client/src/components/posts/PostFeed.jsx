@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import postService from '../../services/postService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function PostFeed({ compact = false }) {
+  const { t, language } = useLanguage()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -24,11 +26,11 @@ function PostFeed({ compact = false }) {
   if (loading || (!posts.length && !error)) return null
 
   return (
-    <section className={`site-post-feed${compact ? ' site-post-feed-compact' : ''}`} aria-label="Platform posts">
+    <section className={`site-post-feed${compact ? ' site-post-feed-compact' : ''}`} aria-label={t('Platform posts')}>
       <div className="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
         <div>
-          <span className="site-post-eyebrow">From the platform</span>
-          <h2 className="h4 mb-0">Latest posts</h2>
+          <span className="site-post-eyebrow">{t('From the platform')}</span>
+          <h2 className="h4 mb-0">{t('Latest posts')}</h2>
         </div>
       </div>
       {error ? <div className="alert alert-danger mb-0" role="alert">{error}</div> : (
@@ -46,7 +48,7 @@ function PostFeed({ compact = false }) {
                 )}
                 <div className="card-body">
                   <time className="site-post-date" dateTime={post.publishedAt || post.createdAt}>
-                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString(language === 'am' ? 'am-ET' : undefined)}
                   </time>
                   <h3 className="h5 mt-2">{post.title}</h3>
                   <p className="site-post-content mb-0">{post.content}</p>

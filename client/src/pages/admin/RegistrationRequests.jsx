@@ -4,8 +4,10 @@ import AdminListPage from '../../components/admin/AdminListPage.jsx'
 import RegistrationTable from '../../components/admin/RegistrationTable.jsx'
 import useAdminRecords from '../../hooks/useAdminRecords.js'
 import adminService from '../../services/adminService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function RegistrationRequests() {
+  const { t } = useLanguage()
   const { records, loading, busyId, error, reload, runAction } = useAdminRecords(adminService.getRegistrationRequests)
   const [status, setStatus] = useState('pending')
   const visibleRequests = useMemo(
@@ -29,15 +31,15 @@ function RegistrationRequests() {
         <>
           <span className="fw-semibold">{visibleRequests.length} requests</span>
           <select
-            aria-label="Filter registration requests by status"
+            aria-label={t('Filter registration requests by status')}
             className="form-select"
             onChange={(event) => setStatus(event.target.value)}
             value={status}
           >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="">All statuses</option>
+            <option value="pending">{t('Pending')}</option>
+            <option value="approved">{t('Approved')}</option>
+            <option value="rejected">{t('Rejected')}</option>
+            <option value="">{t('All statuses')}</option>
           </select>
         </>
       )}

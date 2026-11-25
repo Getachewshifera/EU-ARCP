@@ -5,6 +5,7 @@ import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
 import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 
 function formatCountdown(totalMs) {
@@ -16,6 +17,7 @@ function formatCountdown(totalMs) {
 }
 
 function ActivateAccount() {
+  const { t } = useLanguage()
   const location = useLocation()
   const navigate = useNavigate()
   const registrationData = location.state || {}
@@ -57,7 +59,7 @@ function ActivateAccount() {
       setCopiedField(label)
       window.setTimeout(() => setCopiedField(''), 1500)
     } catch {
-      setError('Unable to copy to clipboard. Please copy the value manually.')
+      setError(t('Unable to copy to clipboard. Please copy the value manually.'))
     }
   }
 
@@ -69,20 +71,20 @@ function ActivateAccount() {
   async function submit(event) {
     event.preventDefault()
     if (expired) {
-      setError('The activation window has expired. Please contact support or re-register.')
+      setError(t('The activation window has expired. Please contact support or re-register.'))
       return
     }
     if (!form.username || !form.email || !form.temporaryPassword) {
-      setError('Activation details are missing. Please go back and try again.')
+      setError(t('Activation details are missing. Please go back and try again.'))
       return
     }
     const passwordError = getPasswordPolicyError(form.newPassword)
     if (passwordError) {
-      setError(passwordError)
+      setError(t(passwordError))
       return
     }
     if (form.newPassword !== form.confirmPassword) {
-      setError('The new password and confirmation do not match.')
+      setError(t('The new password and confirmation do not match.'))
       return
     }
     setSubmitting(true)
@@ -95,9 +97,9 @@ function ActivateAccount() {
         newPassword: form.newPassword,
         confirmPassword: form.confirmPassword,
       })
-      navigate('/login', { state: { message: 'Account activated successfully. Please sign in using your username and new password.' }, replace: true })
+      navigate('/login', { state: { message: t('Account activated successfully. Please sign in using your username and new password.') }, replace: true })
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to activate your account.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to activate your account.'))
     } finally {
       setSubmitting(false)
     }
@@ -105,30 +107,30 @@ function ActivateAccount() {
 
   return (
     <AuthPage description="Set a permanent password before your activation deadline expires." title="Activate your account">
-      {notice && <div className="alert alert-info" role="status">{notice}</div>}
+      {notice &&       <div className="alert alert-info" role="status">{t(notice)}</div>}
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="alert alert-light border mb-4" role="status">
         <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-          <strong>Activation expires in</strong>
+          <strong>{t('Activation expires in')}</strong>
           <span className="badge bg-warning text-dark fs-6 px-3 py-2">{formatCountdown(remainingMs)}</span>
         </div>
       </div>
 
       <div className="vstack gap-3 mb-4">
         <div>
-          <label className="form-label" htmlFor="activation-username">Username</label>
+          <label className="form-label" htmlFor="activation-username">{t('Username')}</label>
           <div className="input-group">
             <input className="form-control" id="activation-username" readOnly value={form.username} />
-            <button className="btn btn-outline-secondary" onClick={() => copyToClipboard(form.username, 'username')} type="button">{copiedField === 'username' ? 'Copied' : 'Copy'}</button>
+            <button className="btn btn-outline-secondary" onClick={() => copyToClipboard(form.username, 'username')} type="button">{t(copiedField === 'username' ? 'Copied' : 'Copy')}</button>
           </div>
         </div>
 
         <div>
-          <label className="form-label" htmlFor="activation-password">Temporary password</label>
+          <label className="form-label" htmlFor="activation-password">{t('Temporary password')}</label>
           <div className="input-group">
             <input className="form-control" id="activation-password" readOnly type={showPassword ? 'text' : 'password'} value={form.temporaryPassword} />
-            <button className="btn btn-outline-secondary" onClick={() => setShowPassword((current) => !current)} type="button">{showPassword ? 'Hide' : 'Show'}</button>
-            <button className="btn btn-outline-secondary" onClick={() => copyToClipboard(form.temporaryPassword, 'password')} type="button">{copiedField === 'password' ? 'Copied' : 'Copy'}</button>
+            <button className="btn btn-outline-secondary" onClick={() => setShowPassword((current) => !current)} type="button">{t(showPassword ? 'Hide' : 'Show')}</button>
+            <button className="btn btn-outline-secondary" onClick={() => copyToClipboard(form.temporaryPassword, 'password')} type="button">{t(copiedField === 'password' ? 'Copied' : 'Copy')}</button>
           </div>
         </div>
       </div>
@@ -165,7 +167,7 @@ function ActivateAccount() {
         />
 
         <button className="btn btn-primary btn-lg" disabled={submitting || expired} type="submit">
-          {submitting ? 'Activating…' : expired ? 'Activation expired' : 'Activate account'}
+          {t(submitting ? 'Activating…' : expired ? 'Activation expired' : 'Activate account')}
         </button>
       </form>
     </AuthPage>

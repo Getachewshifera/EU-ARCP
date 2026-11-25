@@ -1,11 +1,13 @@
 // Purpose: Accessible button toggle for switching between light and dark themes.
 import useTheme from '../../hooks/useTheme.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function ThemeToggle({ className = '', size = 'md', showLabel = false }) {
   const { isDark, toggleTheme } = useTheme()
+  const { t } = useLanguage()
 
   const btnSizeClass = size === 'sm' ? 'btn-sm' : ''
-  const titleText = isDark ? 'Switch to light mode' : 'Switch to dark mode'
+  const titleText = t(isDark ? 'Switch to light mode' : 'Switch to dark mode')
 
   return (
     <button
@@ -57,7 +59,7 @@ function ThemeToggle({ className = '', size = 'md', showLabel = false }) {
         )}
       </span>
       {showLabel && (
-        <span className="ms-2 theme-toggle-text">{isDark ? 'Light' : 'Dark'}</span>
+        <span className="ms-2 theme-toggle-text">{t(isDark ? 'Light' : 'Dark')}</span>
       )}
     </button>
   )

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import adminService from '../../services/adminService.js'
 import AdminDataTable from './AdminDataTable.jsx'
 import { displayValue, getItems, getRecordId } from './adminData.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function AdminResourcePage({
   title,
@@ -11,6 +12,7 @@ function AdminResourcePage({
   columns,
   createLabel = 'Add record',
 }) {
+  const { t } = useLanguage()
   const [rows, setRows] = useState([])
   const [form, setForm] = useState({})
   const [editingId, setEditingId] = useState('')
@@ -27,11 +29,11 @@ function AdminResourcePage({
       const response = await adminService.listResource(resource)
       setRows(getItems(response))
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to load records.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to load records.'))
     } finally {
       setLoading(false)
     }
-  }, [resource])
+  }, [resource, t])
 
   useEffect(() => {
     let active = true
@@ -42,7 +44,7 @@ function AdminResourcePage({
         if (active) setRows(getItems(response))
       } catch (requestError) {
         if (active) {
-          setError(requestError.response?.data?.message || requestError.message || 'Unable to load records.')
+          setError(t(requestError.response?.data?.message || requestError.message || 'Unable to load records.'))
         }
       } finally {
         if (active) setLoading(false)
@@ -51,7 +53,7 @@ function AdminResourcePage({
 
     loadInitialResource()
     return () => { active = false }
-  }, [resource])
+  }, [resource, t])
 
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -97,7 +99,7 @@ function AdminResourcePage({
       setEditingId('')
       await load()
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to save this record.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to save this record.'))
     } finally {
       setSaving(false)
     }
@@ -105,7 +107,7 @@ function AdminResourcePage({
 
   async function deleteRecord(row) {
     const id = getRecordId(row)
-    if (!id || !window.confirm('Delete this record? This action cannot be undone.')) return
+    if (!id || !window.confirm(t('Delete this record? This action cannot be undone.'))) return
 
     setError('')
     try {
@@ -122,11 +124,11 @@ function AdminResourcePage({
     <section>
       <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
         <div>
-          <h1 className="h3 mb-1">{title}</h1>
-          <p className="text-secondary mb-0">{description}</p>
+          <h1 className="h3 mb-1">{t(title)}</h1>
+          <p className="text-secondary mb-0">{t(description)}</p>
         </div>
         <button className="btn btn-primary" type="button" onClick={startCreate}>
-          {createLabel}
+          {t(createLabel)}
         </button>
       </div>
 
@@ -135,9 +137,9 @@ function AdminResourcePage({
       {(editingId || Object.keys(form).length > 0) && (
         <form className="card card-body mb-4" onSubmit={submitForm}>
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h2 className="h5 mb-0">{editingId ? 'Edit record' : 'Create record'}</h2>
+            <h2 className="h5 mb-0">{t(editingId ? 'Edit record' : 'Create record')}</h2>
             <button
-              aria-label="Close form"
+              aria-label={t('Close form')}
               className="btn-close"
               type="button"
               onClick={() => { setEditingId(''); setForm({}) }}
@@ -147,7 +149,7 @@ function AdminResourcePage({
             {fields.map((field) => (
               <div className={field.type === 'textarea' ? 'col-12' : 'col-md-6'} key={field.name}>
                 <label className="form-label" htmlFor={`${resource}-${field.name}`}>
-                  {field.label}
+                  {t(field.label)}
                 </label>
                 {field.type === 'select' ? (
                   <select
@@ -157,9 +159,9 @@ function AdminResourcePage({
                     value={form[field.name] ?? ''}
                     onChange={(event) => updateField(field.name, event.target.value)}
                   >
-                    <option value="">Select {field.label.toLowerCase()}</option>
+                    <option value="">{t('Select')} {t(field.label.toLowerCase())}</option>
                     {field.options.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>{t(option.label)}</option>
                     ))}
                   </select>
                 ) : field.type === 'textarea' ? (
@@ -186,14 +188,14 @@ function AdminResourcePage({
           </div>
           <div className="d-flex gap-2 mt-3">
             <button className="btn btn-primary" disabled={saving} type="submit">
-              {saving ? 'Saving…' : editingId ? 'Save changes' : 'Create'}
+              {t(saving ? 'Saving…' : editingId ? 'Save changes' : 'Create')}
             </button>
             <button
               className="btn btn-outline-secondary"
               type="button"
               onClick={() => { setEditingId(''); setForm({}) }}
             >
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         </form>
@@ -201,23 +203,23 @@ function AdminResourcePage({
 
       <div className="card">
         <div className="card-header bg-white d-flex flex-wrap gap-2 justify-content-between align-items-center py-3">
-          <span className="fw-semibold">{rows.length} records</span>
+          <span className="fw-semibold">{rows.length} {t('records')}</span>
           <div className="d-flex gap-2">
             <input
-              aria-label={`Search ${title.toLowerCase()}`}
+              aria-label={`${t('Search')} ${t(title.toLowerCase())}`}
               className="form-control"
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search records"
+              placeholder={t('Search records')}
               type="search"
               value={search}
             />
             <button className="btn btn-outline-secondary" disabled={loading} onClick={load} type="button">
-              Refresh
+              {t('Refresh')}
             </button>
           </div>
         </div>
         {loading ? (
-          <div className="p-4 text-secondary" role="status">Loading records…</div>
+          <div className="p-4 text-secondary" role="status">{t('Loading records…')}</div>
         ) : (
           <AdminDataTable
             actions={(row) => (
@@ -231,7 +233,7 @@ function AdminResourcePage({
               </>
             )}
             columns={tableColumns}
-            emptyMessage={search ? 'No records match your search.' : 'No records have been added yet.'}
+            emptyMessage={t(search ? 'No records match your search.' : 'No records have been added yet.')}
             rows={visibleRows}
           />
         )}

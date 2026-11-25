@@ -4,6 +4,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import useAuth from '../../hooks/useAuth.js'
 import userService from '../../services/userService.js'
 import { getAvatarUrl } from '../../services/studentService.js'
+import useLanguage from '../../hooks/useLanguage.js'
+import LanguageToggle from '../common/LanguageToggle.jsx'
 import ThemeToggle from '../common/ThemeToggle.jsx'
 import PostFeed from '../posts/PostFeed.jsx'
 
@@ -45,6 +47,7 @@ function DashboardLayout({ role }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
   const [displayName, setDisplayName] = useState(() => getDisplayName(user))
   const [universityName, setUniversityName] = useState(
     user?.university && typeof user.university === 'object' ? user.university.name || '' : '',
@@ -85,11 +88,11 @@ function DashboardLayout({ role }) {
   return (
     <div className={`dashboard-shell dashboard-shell-${role}`}>
       <aside className="dashboard-sidebar">
-        <Link className="dashboard-brand" to={`/${role}`}>EU-ARCP <span>{role}</span></Link>
+        <Link className="dashboard-brand" to={`/${role}`}>EU-ARCP <span>{t(role === 'lecturer' ? 'Lecturer' : 'Student')}</span></Link>
         <nav aria-label={`${role} navigation`} className="nav flex-column dashboard-nav">
           {links.map(([label, to, end]) => (
             <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} end={end} key={to} to={to}>
-              {label}
+              {t(label)}
             </NavLink>
           ))}
         </nav>
@@ -104,21 +107,22 @@ function DashboardLayout({ role }) {
             }
             <div style={{ overflow: 'hidden' }}>
               <strong style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</strong>
-              <span className="text-secondary small text-capitalize">{role}</span>
+              <span className="text-secondary small text-capitalize">{t(role === 'lecturer' ? 'Lecturer' : 'Student')}</span>
             </div>
           </div>
           <button className="btn btn-outline-secondary btn-sm mt-1" onClick={handleLogout} type="button">
-            Sign out
+            {t('Sign out')}
           </button>
         </div>
       </aside>
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div>
-            <span className="fw-semibold d-block">Academic Resource Collaboration Platform</span>
+            <span className="fw-semibold d-block">{t('Academic Resource Collaboration Platform')}</span>
             <span className="text-secondary small">{universityName || (universityLoadError ? 'University unavailable' : '')}</span>
           </div>
           <div className="d-flex align-items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle size="sm" />
           </div>
         </header>

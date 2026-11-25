@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function RegistrationStatus() {
+  const { t } = useLanguage()
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState(searchParams.get('email') || '')
   const [result, setResult] = useState(null)
@@ -20,7 +22,7 @@ function RegistrationStatus() {
       const response = await authService.registrationStatus({ email })
       setResult(response.data?.data ?? response.data)
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to check registration status.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to check registration status.'))
     } finally {
       setLoading(false)
     }
@@ -34,20 +36,20 @@ function RegistrationStatus() {
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <form className="vstack gap-3 mb-4" onSubmit={checkStatus}>
         <div>
-          <label className="form-label" htmlFor="status-email">Email address</label>
+          <label className="form-label" htmlFor="status-email">{t('Email address')}</label>
           <input autoComplete="email" className="form-control" id="status-email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
         </div>
         <button className="btn btn-primary" disabled={loading} type="submit">
-          {loading ? 'Checking…' : 'Check status'}
+          {t(loading ? 'Checking…' : 'Check status')}
         </button>
       </form>
       {result && (
         <div className={`alert alert-${statusClass}`} role="status">
-          <strong className="text-capitalize">{result.status || 'Status available'}</strong>
+          <strong className="text-capitalize">{t(result.status || 'Status available')}</strong>
           {result.message && <p className="mb-0 mt-1">{result.message}</p>}
         </div>
       )}
-      <p className="text-secondary mb-0">Need an account? <Link to="/register">Submit a registration request</Link>.</p>
+      <p className="text-secondary mb-0">{t('Need an account?')} <Link to="/register">{t('Submit a registration request')}</Link>.</p>
     </AuthPage>
   )
 }

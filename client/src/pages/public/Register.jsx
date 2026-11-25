@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import adminService from '../../services/adminService.js'
 import authService from '../../services/authService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 const initialForm = {
   role: 'student',
@@ -118,6 +119,7 @@ const fallbackUniversities = [
 ]
 
 function Register() {
+  const { t } = useLanguage()
   const [form, setForm] = useState(initialForm)
   const [universities, setUniversities] = useState([])
   const [colleges, setColleges] = useState([])
@@ -338,9 +340,9 @@ function Register() {
         return
       }
 
-      setNotice(data.message || 'Registration submitted successfully. You can sign in after your account is approved.')
+      setNotice(t(data.message || 'Registration submitted successfully. You can sign in after your account is approved.'))
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to submit registration.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to submit registration.'))
     } finally {
       setSubmitting(false)
     }
@@ -352,13 +354,13 @@ function Register() {
       {notice && <div className="alert alert-success" role="status">{notice}</div>}
       <form className="vstack gap-3" onSubmit={submit}>
         <div>
-          <label className="form-label" htmlFor="register-role">Account type</label>
+          <label className="form-label" htmlFor="register-role">{t('Account type')}</label>
           <select className="form-select" disabled={submitting} id="register-role" name="role" onChange={(event) => {
             const role = event.target.value
             setForm({ ...initialForm, role })
           }} value={form.role}>
-            <option value="student">Student</option>
-            <option value="lecturer">Lecturer</option>
+            <option value="student">{t('Student')}</option>
+            <option value="lecturer">{t('Lecturer')}</option>
           </select>
         </div>
 
@@ -366,7 +368,7 @@ function Register() {
           {['firstName', 'middleName', 'lastName'].map((name) => (
             <div className="col-sm-4" key={name}>
               <label className="form-label" htmlFor={`register-${name}`}>{
-                name === 'firstName' ? 'First name' : name === 'middleName' ? 'Middle name' : 'Last name'
+                t(name === 'firstName' ? 'First name' : name === 'middleName' ? 'Middle name' : 'Last name')
               }</label>
               <input autoComplete={name === 'firstName' ? 'given-name' : name === 'middleName' ? 'additional-name' : 'family-name'} className="form-control" disabled={submitting} id={`register-${name}`} name={name} onChange={update} required value={form[name]} />
             </div>
@@ -374,14 +376,14 @@ function Register() {
         </div>
 
         <div>
-          <label className="form-label" htmlFor="register-university">University</label>
+          <label className="form-label" htmlFor="register-university">{t('University')}</label>
           <select className="form-select" disabled={submitting || loading.universities} id="register-university" name="universityId" onChange={(event) => {
             setColleges([])
             setDepartments([])
             setPrograms([])
             setForm((current) => ({ ...current, universityId: event.target.value, collegeId: '', departmentId: '', programId: '', academicYear: '' }))
           }} required value={form.universityId}>
-            <option value="">Select your university</option>
+            <option value="">{t('Select your university')}</option>
             {universities.map((university) => (
               <option key={university._id} value={university._id}>{university.name}</option>
             ))}
@@ -389,13 +391,13 @@ function Register() {
         </div>
 
         <div>
-          <label className="form-label" htmlFor="register-college">College or school</label>
+          <label className="form-label" htmlFor="register-college">{t('College or school')}</label>
           <select className="form-select" disabled={submitting || loading.colleges || !form.universityId} id="register-college" name="collegeId" onChange={(event) => {
             setDepartments([])
             setPrograms([])
             setForm((current) => ({ ...current, collegeId: event.target.value, departmentId: '', programId: '' }))
           }} required value={form.collegeId}>
-            <option value="">Select your college</option>
+            <option value="">{t('Select your college')}</option>
             {colleges.map((college) => (
               <option key={college._id} value={college._id}>{college.name}</option>
             ))}
@@ -403,12 +405,12 @@ function Register() {
         </div>
 
         <div>
-          <label className="form-label" htmlFor="register-department">Department</label>
+          <label className="form-label" htmlFor="register-department">{t('Department')}</label>
           <select className="form-select" disabled={submitting || loading.departments || !form.collegeId} id="register-department" name="departmentId" onChange={(event) => {
             setPrograms([])
             setForm((current) => ({ ...current, departmentId: event.target.value, programId: '' }))
           }} required value={form.departmentId}>
-            <option value="">Select your department</option>
+            <option value="">{t('Select your department')}</option>
             {departments.map((department) => (
               <option key={department._id} value={department._id}>{department.name}</option>
             ))}
@@ -417,9 +419,9 @@ function Register() {
 
         {form.role === 'student' && (
           <div>
-            <label className="form-label" htmlFor="register-academic-year">Academic year or current study year</label>
+            <label className="form-label" htmlFor="register-academic-year">{t('Academic year or current study year')}</label>
             <select className="form-select" disabled={submitting} id="register-academic-year" name="academicYear" onChange={update} required value={form.academicYear}>
-              <option value="">Select academic year</option>
+              <option value="">{t('Select academic year')}</option>
               {academicYearOptions.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -428,30 +430,30 @@ function Register() {
         )}
 
         <div>
-          <label className="form-label" htmlFor="register-identity-id">{form.role === 'student' ? 'University ID' : 'Lecturer ID'}</label>
+          <label className="form-label" htmlFor="register-identity-id">{t(form.role === 'student' ? 'University ID' : 'Lecturer ID')}</label>
           <input className="form-control" disabled={submitting} id="register-identity-id" name="identityId" onChange={update} required value={form.identityId} />
         </div>
 
         <div>
-          <label className="form-label" htmlFor="register-email">Email address</label>
+          <label className="form-label" htmlFor="register-email">{t('Email address')}</label>
           <input autoComplete="email" className="form-control" disabled={submitting} id="register-email" name="email" onChange={update} required type="email" value={form.email} />
         </div>
 
         <div>
-          <label className="form-label" htmlFor="register-phone">Phone number (optional)</label>
+          <label className="form-label" htmlFor="register-phone">{t('Phone number (optional)')}</label>
           <input autoComplete="tel" className="form-control" disabled={submitting} id="register-phone" name="phone" onChange={update} type="tel" value={form.phone} />
         </div>
 
         <div>
-          <label className="form-label" htmlFor="register-profile-photo">Profile photo</label>
+          <label className="form-label" htmlFor="register-profile-photo">{t('Profile photo')}</label>
           <input accept="image/png,image/jpeg" className="form-control" disabled={submitting} id="register-profile-photo" name="profilePhoto" onChange={update} required type="file" />
         </div>
 
         <button className="btn btn-primary btn-lg" disabled={submitting || loading.universities} type="submit">
-          {submitting ? 'Submitting…' : 'Create account'}
+          {t(submitting ? 'Submitting…' : 'Create account')}
         </button>
       </form>
-      <p className="text-secondary text-center mt-4 mb-0">Already registered? <Link to="/login">Sign in</Link></p>
+      <p className="text-secondary text-center mt-4 mb-0">{t('Already registered?')} <Link to="/login">{t('Sign in')}</Link></p>
     </AuthPage>
   )
 }

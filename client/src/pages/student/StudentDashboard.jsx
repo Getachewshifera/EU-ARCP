@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import studentService from '../../services/studentService.js'
 import { asEntity, asList, getErrorMessage, getRecordId, getRecordTitle, displayPerson } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState, EmptyState } from '../../components/portal/student/StudentUi.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 
 const shortcuts = [
   ['Browse materials', '/student/materials', 'Find course resources shared with students.'],
@@ -12,6 +13,7 @@ const shortcuts = [
 ]
 
 export default function StudentDashboard() {
+  const { t } = useLanguage()
   const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -53,17 +55,17 @@ export default function StudentDashboard() {
     <main className="container py-4">
       <PageHeader
         title="Student dashboard"
-        description={displayPerson(student) ? `Welcome, ${displayPerson(student)}.` : 'Your learning hub for shared resources and study groups.'}
-        actions={<Link className="btn btn-outline-primary" to="/student/profile">View profile</Link>}
+        description={displayPerson(student) ? `${t('Welcome,')} ${displayPerson(student)}.` : 'Your learning hub for shared resources and study groups.'}
+        actions={<Link className="btn btn-outline-primary" to="/student/profile">{t('View profile')}</Link>}
       />
       {loading ? <LoadingState label="Loading your dashboard…" /> : error ? <ErrorState message={error} onRetry={retryDashboard} /> : (
         <>
           {metrics.length > 0 && (
-            <section className="row g-3 mb-4" aria-label="Account overview">
+            <section className="row g-3 mb-4" aria-label={t('Account overview')}>
               {metrics.map(([label, value]) => (
                 <div className="col-6 col-lg-3" key={label}>
                   <div className="card h-100 shadow-sm"><div className="card-body">
-                    <p className="text-body-secondary mb-1">{label}</p>
+                    <p className="text-body-secondary mb-1">{t(label)}</p>
                     <p className="h3 mb-0">{value}</p>
                   </div></div>
                 </div>
@@ -71,24 +73,24 @@ export default function StudentDashboard() {
             </section>
           )}
           <section className="mb-4">
-            <h2 className="h5 mb-3">Quick access</h2>
+            <h2 className="h5 mb-3">{t('Quick access')}</h2>
             <div className="row g-3">
               {shortcuts.map(([title, to, description]) => (
                 <div className="col-12 col-sm-6 col-xl-3" key={title}>
                   <Link to={to} className="card h-100 shadow-sm text-decoration-none text-reset">
-                    <div className="card-body"><h3 className="h6">{title}</h3><p className="text-body-secondary mb-0">{description}</p></div>
+                    <div className="card-body"><h3 className="h6">{t(title)}</h3><p className="text-body-secondary mb-0">{t(description)}</p></div>
                   </Link>
                 </div>
               ))}
             </div>
           </section>
           {data && Object.keys(data).length === 0 && (
-            <div className="alert alert-info">Your dashboard is ready. Explore the sections above to get started.</div>
+            <div className="alert alert-info">{t('Your dashboard is ready. Explore the sections above to get started.')}</div>
           )}
           {(data.recentMaterials || data.materials) && (
             <section className="mb-4">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h2 className="h5 mb-0">Recent materials</h2><Link to="/student/materials">Browse all</Link>
+                <h2 className="h5 mb-0">{t('Recent materials')}</h2><Link to="/student/materials">{t('Browse all')}</Link>
               </div>
               {recentMaterials.length ? <div className="list-group">
                 {recentMaterials.slice(0, 5).map((item) => (
@@ -102,7 +104,7 @@ export default function StudentDashboard() {
           {(data.recentGroups || data.groups) && (
             <section>
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h2 className="h5 mb-0">Your groups</h2><Link to="/student/groups">Explore groups</Link>
+                <h2 className="h5 mb-0">{t('Your groups')}</h2><Link to="/student/groups">{t('Explore groups')}</Link>
               </div>
               {recentGroups.length ? <div className="list-group">
                 {recentGroups.slice(0, 5).map((group) => (

@@ -7,8 +7,10 @@ import useAdminRecords from '../../hooks/useAdminRecords.js'
 import adminService from '../../services/adminService.js'
 import { displayValue } from '../../components/admin/adminData.js'
 import useAuth from '../../hooks/useAuth.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function Users() {
+  const { t } = useLanguage()
   const { records, loading, busyId, error, reload, runAction } = useAdminRecords(adminService.getUsers)
   const { user: currentUser } = useAuth()
   const [query, setQuery] = useState('')
@@ -62,23 +64,23 @@ function Users() {
           <span className="fw-semibold">{filteredUsers.length} users</span>
           <div className="d-flex flex-wrap gap-2">
             <input
-              aria-label="Search users"
+              aria-label={t('Search users')}
               className="form-control"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search name or email"
+              placeholder={t('Search name or email')}
               type="search"
               value={query}
             />
-            <select aria-label="Filter by role" className="form-select" onChange={(event) => setRole(event.target.value)} value={role}>
-              <option value="">All roles</option>
-              <option value="student">Student</option>
-              <option value="lecturer">Lecturer</option>
-              <option value="admin">Admin</option>
+            <select aria-label={t('Filter by role')} className="form-select" onChange={(event) => setRole(event.target.value)} value={role}>
+              <option value="">{t('All roles')}</option>
+              <option value="student">{t('Student')}</option>
+              <option value="lecturer">{t('Lecturer')}</option>
+              <option value="admin">{t('Admin')}</option>
             </select>
-            <select aria-label="Filter by status" className="form-select" onChange={(event) => setStatus(event.target.value)} value={status}>
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
+            <select aria-label={t('Filter by status')} className="form-select" onChange={(event) => setStatus(event.target.value)} value={status}>
+              <option value="">{t('All statuses')}</option>
+              <option value="active">{t('Active')}</option>
+              <option value="suspended">{t('Suspended')}</option>
             </select>
           </div>
         </>
@@ -94,14 +96,14 @@ function Users() {
         users={filteredUsers}
       />
       <ConfirmDialog
-        confirmLabel="Delete user"
+        confirmLabel={t('Delete user')}
         destructive
         loading={Boolean(deleteTarget && busyId === String(deleteTarget._id ?? deleteTarget.id))}
         message={`Permanently delete ${displayValue(deleteTarget?.name || deleteTarget?.email)} and their account data? This also removes their uploaded materials, messages, and groups. This action cannot be undone.`}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={deleteUser}
         open={Boolean(deleteTarget)}
-        title="Delete user"
+        title={t('Delete user')}
       />
     </AdminListPage>
   )

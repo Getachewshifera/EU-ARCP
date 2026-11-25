@@ -4,11 +4,13 @@ import { getErrorMessage } from '../../components/portal/student/StudentHelpers.
 import { PageHeader, Notice } from '../../components/portal/student/StudentUi.jsx'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
 import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 
 const initialForm = { currentPassword: '', newPassword: '', confirmPassword: '' }
 
 export default function ChangePassword() {
+  const { t } = useLanguage()
   const formRef = useRef(null)
   const [form, setForm] = useState(initialForm)
   const [saving, setSaving] = useState(false)
@@ -20,7 +22,7 @@ export default function ChangePassword() {
     setError('')
     setNotice('')
     if (form.newPassword !== form.confirmPassword) {
-      setError('The new password and confirmation do not match.')
+      setError(t('The new password and confirmation do not match.'))
       return
     }
     const passwordError = getPasswordPolicyError(form.newPassword)
@@ -32,7 +34,7 @@ export default function ChangePassword() {
     try {
       await studentService.changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword })
       setForm(initialForm)
-      setNotice('Your password has been changed.')
+      setNotice(t('Your password has been changed.'))
       formRef.current?.reset()
     } catch (requestError) {
       setError(getErrorMessage(requestError))
@@ -44,15 +46,15 @@ export default function ChangePassword() {
   return (
     <main className="container py-4">
       <PageHeader title="Change password" description="Choose a strong password to protect your account." />
-      {error && <Notice variant="danger">{error}</Notice>}
-      <Notice>{notice}</Notice>
+      {error && <Notice variant="danger">{t(error)}</Notice>}
+      <Notice>{t(notice)}</Notice>
       <form ref={formRef} className="card shadow-sm" onSubmit={submit}>
         <div className="card-body">
           <PasswordInput
             autoComplete="current-password"
             className="mb-3"
             id="current-password"
-            label="Current password"
+            label={t('Current password')}
             name="currentPassword"
             onChange={(event) => setForm({ ...form, currentPassword: event.target.value })}
             required
@@ -63,7 +65,7 @@ export default function ChangePassword() {
             className="mb-3"
             hint={PASSWORD_HINT}
             id="new-password"
-            label="New password"
+            label={t('New password')}
             minLength={8}
             maxLength={200}
             name="newPassword"
@@ -71,12 +73,12 @@ export default function ChangePassword() {
             pattern={PASSWORD_PATTERN}
             required
             value={form.newPassword}
-            title={PASSWORD_HINT}
+            title={t(PASSWORD_HINT)}
           />
           <PasswordInput
             autoComplete="new-password"
             id="confirm-password"
-            label="Confirm new password"
+            label={t('Confirm new password')}
             minLength={8}
             maxLength={200}
             name="confirmPassword"
@@ -84,11 +86,11 @@ export default function ChangePassword() {
             pattern={PASSWORD_PATTERN}
             required
             value={form.confirmPassword}
-            title={PASSWORD_HINT}
+            title={t(PASSWORD_HINT)}
           />
         </div>
         <div className="card-footer bg-body d-flex justify-content-end">
-          <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Updating…' : 'Update password'}</button>
+          <button className="btn btn-primary" type="submit" disabled={saving}>{t(saving ? 'Updating…' : 'Update password')}</button>
         </div>
       </form>
     </main>

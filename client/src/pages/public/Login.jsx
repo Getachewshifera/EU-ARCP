@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import useAuth from '../../hooks/useAuth.js'
+import useLanguage from '../../hooks/useLanguage.js'
 import PasswordInput from '../../components/common/PasswordInput.jsx'
 
 function Login() {
   const { login } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const successMessage = location.state?.message || ''
@@ -28,7 +30,7 @@ function Login() {
       const dashboard = `/${['admin', 'lecturer', 'student'].includes(role) ? role : 'student'}`
       navigate(destination && destination !== '/' ? destination : dashboard, { replace: true })
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to sign in.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to sign in.'))
     } finally {
       setSubmitting(false)
     }
@@ -40,25 +42,25 @@ function Login() {
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <form className="vstack gap-3" onSubmit={submit}>
         <div>
-          <label className="form-label" htmlFor="login-username">Username</label>
+          <label className="form-label" htmlFor="login-username">{t('Username')}</label>
           <input autoComplete="username" className="form-control" id="login-username" name="username" onChange={update} required type="text" value={form.username} />
         </div>
         <PasswordInput
           autoComplete="current-password"
           id="login-password"
-          label="Password"
+          label={t('Password')}
           name="password"
           onChange={update}
           required
           value={form.password}
         />
-        <div className="text-end"><Link to="/forgot-password">Forgot password?</Link></div>
+        <div className="text-end"><Link to="/forgot-password">{t('Forgot password?')}</Link></div>
         <button className="btn btn-primary btn-lg" disabled={submitting} type="submit">
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {t(submitting ? 'Signing in…' : 'Sign in')}
         </button>
       </form>
       <p className="text-secondary text-center mt-4 mb-0">
-        New to EU-ARCP? <Link to="/register">Create an account</Link>
+        {t('New to EU-ARCP?')} <Link to="/register">{t('Create an account')}</Link>
       </p>
     </AuthPage>
   )

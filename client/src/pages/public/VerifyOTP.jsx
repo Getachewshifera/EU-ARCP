@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthPage from '../../components/auth/AuthPage.jsx'
 import authService from '../../services/authService.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function VerifyOTP() {
+  const { t } = useLanguage()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') || ''
   const purpose = searchParams.get('purpose') || 'registration'
@@ -27,23 +29,23 @@ function VerifyOTP() {
         navigate(`/registration-status?email=${encodeURIComponent(email)}`)
       }
     } catch (requestError) {
-      setError(requestError.response?.data?.message || requestError.message || 'Unable to verify this code.')
+      setError(t(requestError.response?.data?.message || requestError.message || 'Unable to verify this code.'))
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <AuthPage description={`Enter the code sent to ${email || 'your email address'}.`} title="Verify your email">
+    <AuthPage description="Enter the verification code sent to your email address." title="Verify your email">
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
-      {!email && <div className="alert alert-warning" role="alert">An email address is required. <Link to="/register">Start registration</Link>.</div>}
+      {!email && <div className="alert alert-warning" role="alert">{t('An email address is required.')} <Link to="/register">{t('Start registration')}</Link>.</div>}
       <form className="vstack gap-3" onSubmit={submit}>
         <div>
-          <label className="form-label" htmlFor="verification-code">Verification code</label>
+          <label className="form-label" htmlFor="verification-code">{t('Verification code')}</label>
           <input autoComplete="one-time-code" className="form-control form-control-lg text-center" id="verification-code" inputMode="numeric" maxLength="8" onChange={(event) => setOtp(event.target.value.trim())} required value={otp} />
         </div>
         <button className="btn btn-primary" disabled={submitting || !email} type="submit">
-          {submitting ? 'Verifying…' : 'Verify code'}
+          {t(submitting ? 'Verifying…' : 'Verify code')}
         </button>
       </form>
     </AuthPage>

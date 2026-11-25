@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import studentService, { getAvatarUrl } from '../../services/studentService.js'
 import { asEntity, getErrorMessage } from '../../components/portal/student/StudentHelpers.js'
 import { PageHeader, LoadingState, ErrorState, Notice } from '../../components/portal/student/StudentUi.jsx'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function Initials({ name }) {
   const parts = (name || '').trim().split(/\s+/)
@@ -56,6 +57,7 @@ function profileForm(value) {
 }
 
 export default function Profile() {
+  const { t } = useLanguage()
   const [profile, setProfile] = useState({})
   const [form, setForm] = useState({})
   const [universities, setUniversities] = useState([])
@@ -119,9 +121,9 @@ export default function Profile() {
         setProfile(updated)
         setPhotoPreview(getAvatarUrl(updated.profilePhoto))
       }
-      setNotice('Profile photo updated.')
+      setNotice(t('Profile photo updated.'))
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not upload photo. Use JPEG/PNG/WebP under 5 MB.'))
+      setError(getErrorMessage(err, t('Could not upload photo. Use JPEG/PNG/WebP under 5 MB.')))
       setPhotoPreview(getAvatarUrl(profile.profilePhoto))
     } finally {
       setPhotoUploading(false)
@@ -137,23 +139,23 @@ export default function Profile() {
   async function submit(event) {
     event.preventDefault()
     if (!form.firstName?.trim() || !form.lastName?.trim()) {
-      setError('First name and last name are required.')
+      setError(t('First name and last name are required.'))
       return
     }
     if (form.firstName.trim().length > 80 || (form.middleName || '').trim().length > 80 || form.lastName.trim().length > 80) {
-      setError('Names must be 80 characters or fewer.')
+      setError(t('Names must be 80 characters or fewer.'))
       return
     }
     if ([form.firstName, form.middleName, form.lastName].filter(Boolean).join(' ').length > 160) {
-      setError('Your full name must be 160 characters or fewer.')
+      setError(t('Your full name must be 160 characters or fewer.'))
       return
     }
     if ((form.bio || '').length > 2000) {
-      setError('About me must be 2000 characters or fewer.')
+      setError(t('About me must be 2000 characters or fewer.'))
       return
     }
     if ((form.phone || '').length > 40) {
-      setError('Phone number must be 40 characters or fewer.')
+      setError(t('Phone number must be 40 characters or fewer.'))
       return
     }
     setSaving(true)
@@ -161,12 +163,12 @@ export default function Profile() {
     setNotice('')
     try {
       if (!form.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        setError('Enter a valid email address.')
+        setError(t('Enter a valid email address.'))
         setSaving(false)
         return
       }
       if (!form.universityId || !form.collegeId || !form.departmentId || !form.programId || !form.academicYear) {
-        setError('Select your university, college, department, program, and academic year.')
+        setError(t('Select your university, college, department, program, and academic year.'))
         setSaving(false)
         return
       }
@@ -185,7 +187,7 @@ export default function Profile() {
       setProfile(result)
       setForm(profileForm(result))
       setEditing(false)
-      setNotice('Your profile has been updated.')
+      setNotice(t('Your profile has been updated.'))
     } catch (requestError) {
       setError(getErrorMessage(requestError))
     } finally {
@@ -222,7 +224,7 @@ export default function Profile() {
         setForm((current) => ({ ...current, [name]: value }))
       }
     } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Unable to load the academic options.'))
+      setError(getErrorMessage(requestError, t('Unable to load the academic options.')))
     }
   }
 
@@ -233,34 +235,34 @@ export default function Profile() {
         description="Review your academic details and manage your contact information."
         actions={!loading && !editing && (
           <button className="btn btn-primary" onClick={() => { setEditing(true); setNotice(''); setError('') }} type="button">
-            Edit profile
+            {t('Edit profile')}
           </button>
         )}
       />
       {loading ? <LoadingState label="Loading profile…" /> : (
         <>
-          {error && <ErrorState message={error} onRetry={retryProfile} />}
-          <Notice>{notice}</Notice>
+          {error && <ErrorState message={t(error)} onRetry={retryProfile} />}
+          <Notice>{t(notice)}</Notice>
           <form className="card shadow-sm" onSubmit={submit}>
             <div className="card-body">
               {/* Profile photo */}
               <div className="d-flex align-items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--bs-border-color,#dee2e6)' }}>
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   {photoPreview
-                    ? <img src={photoPreview} alt="Profile" style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--bs-primary,#0d6efd)', display: 'block' }} />
+                    ? <img src={photoPreview} alt={t('Profile')} style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--bs-primary,#0d6efd)', display: 'block' }} />
                     : <Initials name={[profile.firstName, profile.middleName].filter(Boolean).join(' ') || profile.name || ''} />}
-                  <button type="button" title="Change photo" disabled={photoUploading} onClick={() => photoInputRef.current?.click()}
+                  <button type="button" title={t('Change photo')} disabled={photoUploading} onClick={() => photoInputRef.current?.click()}
                     style={{ position: 'absolute', bottom: 2, right: 2, width: 28, height: 28, borderRadius: '50%', background: 'var(--bs-primary,#0d6efd)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
                     {photoUploading
-                      ? <span className="spinner-border spinner-border-sm text-white" style={{ width: 13, height: 13, borderWidth: 2 }} />
+                      ? <span className="spinner-border spinner-border-sm text-white" role="status" aria-label={t('Uploading photo')} style={{ width: 13, height: 13, borderWidth: 2 }} />
                       : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>}
                   </button>
                   <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePhotoChange} />
                 </div>
                 <div>
-                  <div className="fw-semibold">{[profile.firstName, profile.middleName].filter(Boolean).join(' ') || profile.name || 'Your Name'}</div>
-                  <div className="text-secondary small text-capitalize">{profile.role || 'Student'}</div>
-                  <div className="text-secondary" style={{ fontSize: '0.75rem', marginTop: 2 }}>Click the camera to update photo</div>
+                  <div className="fw-semibold">{[profile.firstName, profile.middleName].filter(Boolean).join(' ') || profile.name || t('Your Name')}</div>
+                  <div className="text-secondary small text-capitalize">{t(profile.role || 'Student')}</div>
+                  <div className="text-secondary" style={{ fontSize: '0.75rem', marginTop: 2 }}>{t('Click the camera to update photo')}</div>
                 </div>
               </div>
 
@@ -270,8 +272,8 @@ export default function Profile() {
                   ['username', 'Username', profile.username],
                 ].map(([name, label, value]) => (
                   <div className="col-12 col-md-6" key={name}>
-                    <label className="form-label" htmlFor={`profile-${name}`}>{label}</label>
-                    <input id={`profile-${name}`} className="form-control" readOnly value={value || 'Not provided'} />
+                    <label className="form-label" htmlFor={`profile-${name}`}>{t(label)}</label>
+                    <input id={`profile-${name}`} className="form-control" readOnly value={value || t('Not provided')} />
                   </div>
                 ))}
                 {[
@@ -281,7 +283,7 @@ export default function Profile() {
                   ['programId', 'Program', programs],
                 ].map(([name, label, items]) => (
                   <div className="col-12 col-md-6" key={name}>
-                    <label className="form-label" htmlFor={`profile-${name}`}>{label}{editing ? ' *' : ''}</label>
+                    <label className="form-label" htmlFor={`profile-${name}`}>{t(label)}{editing ? ' *' : ''}</label>
                     <select
                       className="form-select"
                       disabled={!editing || saving || (name !== 'universityId' && !form[{ collegeId: 'universityId', departmentId: 'collegeId', programId: 'departmentId' }[name]])}
@@ -290,7 +292,7 @@ export default function Profile() {
                       value={form[name] ?? ''}
                       onChange={(event) => updateAcademicField(name, event.target.value)}
                     >
-                      <option value="">Select {label.toLowerCase()}</option>
+                      <option value="">{t('Select')} {t(label).toLowerCase()}</option>
                       {items.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
                     </select>
                   </div>
@@ -298,7 +300,7 @@ export default function Profile() {
                 {fields.map(([name, label, type]) => (
                   <div className="col-12 col-md-6" key={name}>
                     <label className="form-label" htmlFor={`profile-${name}`}>
-                      {label}{editing && ['firstName', 'lastName'].includes(name) ? ' *' : ''}
+                      {t(label)}{editing && ['firstName', 'lastName'].includes(name) ? ' *' : ''}
                     </label>
                     <input id={`profile-${name}`} className="form-control" type={type} name={name}
                       required={editing && ['firstName', 'lastName'].includes(name)} maxLength={name === 'phone' ? 40 : 80} disabled={!editing || saving}
@@ -306,33 +308,33 @@ export default function Profile() {
                   </div>
                 ))}
                 <div className="col-12 col-md-6">
-                  <label className="form-label" htmlFor="profile-email">Email address *</label>
+                  <label className="form-label" htmlFor="profile-email">{t('Email address')} *</label>
                   <input id="profile-email" className="form-control" type="email" required maxLength="254" disabled={!editing || saving} value={form.email ?? ''}
                     onChange={(event) => setForm({ ...form, email: event.target.value })} />
                 </div>
                 <div className="col-12 col-md-6">
-                  <label className="form-label" htmlFor="profile-academicYear">Academic year *</label>
+                  <label className="form-label" htmlFor="profile-academicYear">{t('Academic year')} *</label>
                   <select id="profile-academicYear" className="form-select" required disabled={!editing || saving}
                     value={form.academicYear ?? ''} onChange={(event) => setForm({ ...form, academicYear: event.target.value })}>
-                    <option value="">Select academic year</option>
+                    <option value="">{t('Select academic year')}</option>
                     {academicYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
                     {form.academicYear && !academicYearOptions.includes(form.academicYear)
                       && <option value={form.academicYear}>{form.academicYear}</option>}
                   </select>
                 </div>
                 <div className="col-12">
-                  <label className="form-label" htmlFor="profile-bio">About me</label>
+                  <label className="form-label" htmlFor="profile-bio">{t('About me')}</label>
                   <textarea id="profile-bio" className="form-control" name="bio" rows="4" maxLength="2000" disabled={!editing || saving} value={form.bio ?? ''}
                     onChange={(event) => setForm({ ...form, bio: event.target.value })} />
                 </div>
               </div>
             </div>
             {editing && <div className="card-footer bg-body d-flex justify-content-end gap-2">
-              <button className="btn btn-outline-secondary" onClick={cancelEditing} disabled={saving} type="button">Cancel</button>
-              <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
+              <button className="btn btn-outline-secondary" onClick={cancelEditing} disabled={saving} type="button">{t('Cancel')}</button>
+              <button className="btn btn-primary" type="submit" disabled={saving}>{t(saving ? 'Saving…' : 'Save changes')}</button>
             </div>}
           </form>
-          {profile && Object.keys(profile).length === 0 && <p className="small text-body-secondary mt-3 mb-0">No profile details were returned. You can add your information above.</p>}
+          {profile && Object.keys(profile).length === 0 && <p className="small text-body-secondary mt-3 mb-0">{t('No profile details were returned. You can add your information above.')}</p>}
         </>
       )}
     </main>

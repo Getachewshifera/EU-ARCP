@@ -4,6 +4,7 @@ import Navbar from '../../components/layout/Navbar.jsx'
 import Footer from '../../components/layout/Footer.jsx'
 import PostFeed from '../../components/posts/PostFeed.jsx'
 import useAuth from '../../hooks/useAuth.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 const heroPillars = [
   {
@@ -112,6 +113,7 @@ const steps = [
 
 function Home() {
   const { user, isAuthenticated } = useAuth()
+  const { t } = useLanguage()
 
   if (isAuthenticated) {
     const role = ['admin', 'lecturer', 'student'].includes(user?.role) ? user.role : 'student'
@@ -130,36 +132,36 @@ function Home() {
             <div className="row align-items-center g-5 py-lg-4">
               <div className="col-lg-6">
                 <span className="badge rounded-pill text-bg-primary-subtle text-primary px-3 py-2 fw-semibold mb-3">
-                  Welcome to EUARCP
+                  {t('Welcome to EUARCP')}
                 </span>
                 <h1 className="display-4 fw-bold lh-sm text-balance">
-                  Your Knowledge.<br />
-                  <span className="text-primary">Your University.</span><br />
-                  Your Future.
+                  {t('Your Knowledge.')}<br />
+                  <span className="text-primary">{t('Your University.')}</span><br />
+                  {t('Your Future.')}
                 </h1>
                 <p className="lead text-secondary mt-3 mb-4">
-                  Connect with students and lecturers, discover academic materials, and share knowledge across Ethiopian universities.
+                  {t('Connect with students and lecturers, discover academic materials, and share knowledge across Ethiopian universities.')}
                 </p>
                 <div className="d-flex flex-wrap gap-3">
                   <Link className="btn btn-primary btn-lg px-4 shadow-sm" to="/register">
-                    Get Started
+                    {t('Get Started')}
                   </Link>
                   <Link className="btn btn-outline-primary btn-lg px-4" to="/materials">
-                    Explore Materials
+                    {t('Explore Materials')}
                   </Link>
                 </div>
               </div>
               <div className="col-lg-6">
                 <div className="home-hero-image-wrapper position-relative rounded-4 overflow-hidden shadow-lg border">
                   <img
-                    alt="Ethiopian university students studying together in a modern library"
+                    alt={t('Ethiopian university students studying together in a modern library')}
                     className="img-fluid w-100 object-fit-cover"
                     src="/library-students.png"
                     style={{ minHeight: '340px', maxHeight: '420px' }}
                   />
                   <div className="home-hero-image-overlay position-absolute bottom-0 start-0 end-0 p-3 bg-dark bg-opacity-75 text-white">
                     <p className="small mb-0 fw-medium">
-                      🎓 Ethiopian University Academic Resource & Communication Platform
+                      🎓 {t('Ethiopian University Academic Resource & Communication Platform')}
                     </p>
                   </div>
                 </div>
@@ -176,8 +178,8 @@ function Home() {
                         {pillar.icon}
                       </div>
                       <div>
-                        <h2 className="h6 fw-bold mb-1">{pillar.title}</h2>
-                        <p className="small text-secondary mb-0">{pillar.desc}</p>
+                        <h2 className="h6 fw-bold mb-1">{t(pillar.title)}</h2>
+                        <p className="small text-secondary mb-0">{t(pillar.desc)}</p>
                       </div>
                     </div>
                   </div>
@@ -198,60 +200,60 @@ function Home() {
           <div className="container py-lg-4">
             <div className="row align-items-center g-5">
               <div className="col-lg-7">
-                <span className="text-primary small text-uppercase fw-bold">About the Platform</span>
+                <span className="text-primary small text-uppercase fw-bold">{t('About the Platform')}</span>
                 <h2 className="display-6 fw-bold mt-2 mb-3">
-                  Connecting Ethiopian Universities Through Knowledge & Collaboration
+                  {t('Connecting Ethiopian Universities Through Knowledge & Collaboration')}
                 </h2>
                 <div className="vstack gap-3 text-secondary">
                   <p className="mb-0">
-                    <strong>EUARCP (Ethiopian University Academic Resource and Communication Platform)</strong> is a centralized digital platform designed to connect Ethiopian university students and lecturers through academic resource sharing and communication.
+                    <strong>{t('EUARCP (Ethiopian University Academic Resource and Communication Platform)')}</strong> {t('is a centralized digital platform designed to connect Ethiopian university students and lecturers through academic resource sharing and communication.')}
                   </p>
                   <p className="mb-0">
-                    Our platform makes it easier to upload, discover, access, and download educational materials from different academic fields. Whether you are looking for lecture notes, assignments, tutorials, research papers, or study resources, EUARCP helps you find the materials you need to support your academic journey.
+                    {t('Our platform makes it easier to upload, discover, access, and download educational materials from different academic fields. Whether you are looking for lecture notes, assignments, tutorials, research papers, or study resources, EUARCP helps you find the materials you need to support your academic journey.')}
                   </p>
                   <p className="mb-0">
-                    Beyond resource sharing, EUARCP provides a collaborative environment where students and lecturers can communicate through group discussions and private messaging, exchange knowledge, and learn from one another.
+                    {t('Beyond resource sharing, EUARCP provides a collaborative environment where students and lecturers can communicate through group discussions and private messaging, exchange knowledge, and learn from one another.')}
                   </p>
                   <p className="mb-0">
-                    Our mission is to make academic resources more accessible, strengthen collaboration among Ethiopian universities, and support a connected learning community.
+                    {t('Our mission is to make academic resources more accessible, strengthen collaboration among Ethiopian universities, and support a connected learning community.')}
                   </p>
                 </div>
                 <div className="mt-4 p-3 rounded-3 border-start border-4 border-primary bg-body shadow-sm">
-                  <p className="h5 fw-bold text-primary mb-1">Learn Together. Share Knowledge. Build the Future.</p>
-                  <small className="text-secondary">Empowering higher education across Ethiopia through accessible digital collaboration.</small>
+                  <p className="h5 fw-bold text-primary mb-1">{t('Learn Together. Share Knowledge. Build the Future.')}</p>
+                  <small className="text-secondary">{t('Empowering higher education across Ethiopia through accessible digital collaboration.')}</small>
                 </div>
               </div>
               <div className="col-lg-5">
                 <div className="card border-0 shadow-sm p-4 home-about-highlight-card">
                   <div className="card-body p-2">
-                    <h3 className="h5 fw-bold mb-4">Platform Highlights</h3>
+                    <h3 className="h5 fw-bold mb-4">{t('Platform Highlights')}</h3>
                     <div className="vstack gap-4">
                       <div className="d-flex align-items-start gap-3">
                         <span className="badge rounded-circle text-bg-primary p-2">✓</span>
                         <div>
-                          <strong className="d-block text-body">Centralized Resource Hub</strong>
-                          <span className="small text-secondary">Lecture notes, past papers, lab manuals, and tutorials in one place.</span>
+                          <strong className="d-block text-body">{t('Centralized Resource Hub')}</strong>
+                          <span className="small text-secondary">{t('Lecture notes, past papers, lab manuals, and tutorials in one place.')}</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-start gap-3">
                         <span className="badge rounded-circle text-bg-primary p-2">✓</span>
                         <div>
-                          <strong className="d-block text-body">Cross-University Interaction</strong>
-                          <span className="small text-secondary">Connect with learners and faculty from institutions nationwide.</span>
+                          <strong className="d-block text-body">{t('Cross-University Interaction')}</strong>
+                          <span className="small text-secondary">{t('Connect with learners and faculty from institutions nationwide.')}</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-start gap-3">
                         <span className="badge rounded-circle text-bg-primary p-2">✓</span>
                         <div>
-                          <strong className="d-block text-body">Real-Time Messaging</strong>
-                          <span className="small text-secondary">Department study groups and private mentor messaging for guidance.</span>
+                          <strong className="d-block text-body">{t('Real-Time Messaging')}</strong>
+                          <span className="small text-secondary">{t('Department study groups and private mentor messaging for guidance.')}</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-start gap-3">
                         <span className="badge rounded-circle text-bg-primary p-2">✓</span>
                         <div>
-                          <strong className="d-block text-body">Verified Profiles</strong>
-                          <span className="small text-secondary">Role-based accounts for students, lecturers, and department heads.</span>
+                          <strong className="d-block text-body">{t('Verified Profiles')}</strong>
+                          <span className="small text-secondary">{t('Role-based accounts for students, lecturers, and department heads.')}</span>
                         </div>
                       </div>
                     </div>
@@ -268,10 +270,10 @@ function Home() {
         <section className="py-5 border-bottom" id="features">
           <div className="container py-lg-4">
             <div className="text-center mx-auto mb-5" style={{ maxWidth: '42rem' }}>
-              <span className="text-primary small text-uppercase fw-bold">Key Features</span>
-              <h2 className="display-6 fw-bold mt-2">Tools Designed for Your Academic Success</h2>
+              <span className="text-primary small text-uppercase fw-bold">{t('Key Features')}</span>
+              <h2 className="display-6 fw-bold mt-2">{t('Tools Designed for Your Academic Success')}</h2>
               <p className="text-secondary lead fs-6">
-                Everything you need to discover learning materials, collaborate on coursework, and communicate easily.
+                {t('Everything you need to discover learning materials, collaborate on coursework, and communicate easily.')}
               </p>
             </div>
             <div className="row g-4">
@@ -284,11 +286,11 @@ function Home() {
                           {feature.icon}
                         </div>
                         <span className="badge rounded-pill text-bg-secondary-subtle text-secondary small">
-                          {feature.badge}
+                          {t(feature.badge)}
                         </span>
                       </div>
-                      <h3 className="h5 fw-bold mb-2">{feature.title}</h3>
-                      <p className="text-secondary small mb-0 flex-grow-1">{feature.desc}</p>
+                      <h3 className="h5 fw-bold mb-2">{t(feature.title)}</h3>
+                      <p className="text-secondary small mb-0 flex-grow-1">{t(feature.desc)}</p>
                     </div>
                   </div>
                 </div>
@@ -303,10 +305,10 @@ function Home() {
         <section className="py-5 bg-body-tertiary" id="how-it-works">
           <div className="container py-lg-4">
             <div className="text-center mx-auto mb-5" style={{ maxWidth: '42rem' }}>
-              <span className="text-primary small text-uppercase fw-bold">How It Works</span>
-              <h2 className="display-6 fw-bold mt-2">Get Started in 4 Simple Steps</h2>
+              <span className="text-primary small text-uppercase fw-bold">{t('How It Works')}</span>
+              <h2 className="display-6 fw-bold mt-2">{t('Get Started in 4 Simple Steps')}</h2>
               <p className="text-secondary lead fs-6">
-                Joining the Ethiopian University Academic Resource & Communication Platform is quick and easy.
+                {t('Joining the Ethiopian University Academic Resource & Communication Platform is quick and easy.')}
               </p>
             </div>
             <div className="row g-4">
@@ -317,8 +319,8 @@ function Home() {
                       <span className="display-5 fw-bold text-primary opacity-25 d-block mb-2">
                         {item.step}
                       </span>
-                      <h3 className="h5 fw-bold mb-2">{item.title}</h3>
-                      <p className="text-secondary small mb-0">{item.desc}</p>
+                      <h3 className="h5 fw-bold mb-2">{t(item.title)}</h3>
+                      <p className="text-secondary small mb-0">{t(item.desc)}</p>
                     </div>
                   </div>
                 </div>
@@ -335,20 +337,20 @@ function Home() {
             <div className="home-cta-card p-5 text-center text-white rounded-4 shadow-lg position-relative overflow-hidden">
               <div className="position-relative mx-auto" style={{ maxWidth: '44rem', zIndex: 1 }}>
                 <span className="badge rounded-pill bg-white text-primary px-3 py-2 fw-semibold mb-3">
-                  Start Your Journey
+                  {t('Start Your Journey')}
                 </span>
                 <h2 className="display-5 fw-bold mb-3">
-                  Join the EUARCP Community Today!
+                  {t('Join the EUARCP Community Today!')}
                 </h2>
                 <p className="lead text-white-50 mb-4 fs-5">
-                  Learn Together. Share Knowledge. Build the Future. Connect with thousands of students and lecturers across Ethiopian universities.
+                  {t('Learn Together. Share Knowledge. Build the Future. Connect with thousands of students and lecturers across Ethiopian universities.')}
                 </p>
                 <div className="d-flex flex-wrap justify-content-center gap-3">
                   <Link className="btn btn-light btn-lg px-4 text-primary fw-semibold" to="/register">
-                    Create Free Account
+                    {t('Create Free Account')}
                   </Link>
                   <Link className="btn btn-outline-light btn-lg px-4" to="/login">
-                    Sign In to Workspace
+                    {t('Sign In to Workspace')}
                   </Link>
                 </div>
               </div>

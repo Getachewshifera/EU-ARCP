@@ -1,7 +1,9 @@
 // Purpose: Reusable modal dialog container.
 import { useEffect } from 'react'
+import useLanguage from '../../hooks/useLanguage.js'
 
 function Modal({ open, title, onClose, children, size = 'md', labelledBy = 'modal-title' }) {
+  const { t } = useLanguage()
   useEffect(() => {
     if (!open) return undefined
     function onKeyDown(event) {
@@ -23,10 +25,10 @@ function Modal({ open, title, onClose, children, size = 'md', labelledBy = 'moda
       <div aria-labelledby={labelledBy} aria-modal="true" className={`modal-dialog modal-${size} modal-dialog-centered`} role="dialog">
         <div className="modal-content">
           <div className="modal-header">
-            <h2 className="modal-title fs-5" id={labelledBy}>{title}</h2>
-            <button aria-label="Close" className="btn-close" onClick={onClose} type="button" />
+            <h2 className="modal-title fs-5" id={labelledBy}>{t(title)}</h2>
+            <button aria-label={t('Close')} className="btn-close" onClick={onClose} type="button" />
           </div>
-          <div className="modal-body">{children}</div>
+          <div className="modal-body">{t(children)}</div>
         </div>
       </div>
     </div>
