@@ -4,6 +4,27 @@ import AdminDataTable from './AdminDataTable.jsx'
 import { displayValue, getItems, getRecordId } from './adminData.js'
 import useLanguage from '../../hooks/useLanguage.js'
 
+function getFieldDefaultValue(field) {
+  if (field.defaultValue !== undefined) {
+    return Array.isArray(field.defaultValue) ? [...field.defaultValue] : field.defaultValue
+  }
+  if (field.type === 'checkbox') return false
+  if (field.type === 'multiselect') return []
+  return ''
+}
+
+function getOptionValue(value) {
+  if (value && typeof value === 'object') return getRecordId(value)
+  return value == null ? '' : String(value)
+}
+
+function getOptionLabel(option, labelField = 'name') {
+  return option[labelField]
+    || [option.firstName, option.middleName, option.lastName].filter(Boolean).join(' ')
+    || option.email
+    || getRecordId(option)
+}
+
 function AdminResourcePage({
   title,
   description,
@@ -20,6 +41,12 @@ function AdminResourcePage({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [fieldOptions, setFieldOptions] = useState({})
+  const [optionsError, setOptionsError] = useState('')
+  const optionResources = useMemo(
+    () => [...new Set(fields.map((field) => field.optionsResource).filter(Boolean))],
+    [fields],
+  )
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -55,6 +82,32 @@ function AdminResourcePage({
     return () => { active = false }
   }, [resource, t])
 
+  useEffect(() => {
+    let active = true
+
+    async function loadFieldOptions() {
+      try {
+        const entries = await Promise.all(optionResources.map(async (optionResource) => {
+          const response = await adminService.listResource(optionResource, { limit: 500 })
+          return [optionResource, getItems(response)]
+        }))
+        if (active) {
+          setFieldOptions(Object.fromEntries(entries))
+          setOptionsError('')
+        }
+      } catch (requestError) {
+        if (active) {
+          setOptionsError(t(requestError.response?.data?.message || requestError.message || 'Unable to load selection options.'))
+        }
+      }
+    }
+
+    if (optionResources.length > 0) loadFieldOptions()
+    else setFieldOptions({})
+
+    return () => { active = false }
+  }, [optionResources, t])
+
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return rows
@@ -66,21 +119,30 @@ function AdminResourcePage({
 
   function startCreate() {
     setEditingId('')
-    setForm(Object.fromEntries(fields.map(({ name, defaultValue }) => [name, defaultValue ?? ''])))
+    setForm(Object.fromEntries(fields.map((field) => [field.name, getFieldDefaultValue(field)])))
     setError('')
   }
 
   function startEdit(row) {
     setEditingId(getRecordId(row))
-    setForm(Object.fromEntries(fields.map(({ name }) => {
-      const value = row[name] ?? ''
-      return [name, typeof value === 'object' && value !== null ? JSON.stringify(value) : value]
+    setForm(Object.fromEntries(fields.map((field) => {
+      const value = row[field.name]
+      if (field.type === 'checkbox') return [field.name, Boolean(value)]
+      if (field.type === 'multiselect') {
+        return [field.name, Array.isArray(value) ? value.map(getOptionValue) : []]
+      }
+      return [field.name, value == null ? getFieldDefaultValue(field) : getOptionValue(value)]
     })))
     setError('')
   }
 
   function updateField(name, value) {
-    setForm((current) => ({ ...current, [name]: value }))
+    setForm((current) => {
+      const next = { ...current, [name]: value }
+      fields.filter((field) => field.dependsOn === name)
+        .forEach((field) => { next[field.name] = getFieldDefaultValue(field) })
+      return next
+    })
   }
 
   async function submitForm(event) {
@@ -133,6 +195,7 @@ function AdminResourcePage({
       </div>
 
       {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      {optionsError && <div className="alert alert-warning" role="alert">{optionsError}</div>}
 
       {(editingId || Object.keys(form).length > 0) && (
         <form className="card card-body mb-4" onSubmit={submitForm}>
@@ -152,22 +215,62 @@ function AdminResourcePage({
                   {t(field.label)}
                 </label>
                 {field.type === 'select' ? (
+                  (() => {
+                    const options = field.optionsResource ? fieldOptions[field.optionsResource] || [] : field.options || []
+                    const parentValue = field.dependsOn ? form[field.dependsOn] : ''
+                    const visibleOptions = field.optionParentField && parentValue
+                      ? options.filter((option) => getOptionValue(option[field.optionParentField]) === String(parentValue))
+                      : options
+                    return (
                   <select
                     className="form-select"
+                    disabled={Boolean(field.dependsOn && !parentValue)}
                     id={`${resource}-${field.name}`}
                     required={field.required}
                     value={form[field.name] ?? ''}
                     onChange={(event) => updateField(field.name, event.target.value)}
                   >
                     <option value="">{t('Select')} {t(field.label.toLowerCase())}</option>
-                    {field.options.map((option) => (
-                      <option key={option.value} value={option.value}>{t(option.label)}</option>
-                    ))}
+                    {visibleOptions.map((option) => {
+                      const value = field.optionsResource ? getRecordId(option) : option.value
+                      const label = field.optionsResource ? getOptionLabel(option, field.optionLabel) : option.label
+                      return <option key={value} value={value}>{t(label)}</option>
+                    })}
                   </select>
+                    )
+                  })()
+                ) : field.type === 'multiselect' ? (
+                  <select
+                    className="form-select"
+                    id={`${resource}-${field.name}`}
+                    multiple
+                    required={field.required}
+                    size={Math.min(6, Math.max(3, (fieldOptions[field.optionsResource]?.length || field.options?.length || 0)))}
+                    value={form[field.name] ?? []}
+                    onChange={(event) => updateField(field.name, Array.from(event.target.selectedOptions, (option) => option.value))}
+                  >
+                    {(field.optionsResource ? fieldOptions[field.optionsResource] || [] : field.options || []).map((option) => {
+                      const value = field.optionsResource ? getRecordId(option) : option.value
+                      const label = field.optionsResource ? getOptionLabel(option, field.optionLabel) : option.label
+                      return <option key={value} value={value}>{t(label)}</option>
+                    })}
+                  </select>
+                ) : field.type === 'checkbox' ? (
+                  <div className="form-check">
+                    <input
+                      checked={Boolean(form[field.name])}
+                      className="form-check-input"
+                      id={`${resource}-${field.name}`}
+                      onChange={(event) => updateField(field.name, event.target.checked)}
+                      type="checkbox"
+                    />
+                    <label className="form-check-label" htmlFor={`${resource}-${field.name}`}>{t(field.checkboxLabel || field.label)}</label>
+                  </div>
                 ) : field.type === 'textarea' ? (
                   <textarea
                     className="form-control"
                     id={`${resource}-${field.name}`}
+                    maxLength={field.maxLength}
                     required={field.required}
                     rows="3"
                     value={form[field.name] ?? ''}
@@ -177,6 +280,10 @@ function AdminResourcePage({
                   <input
                     className="form-control"
                     id={`${resource}-${field.name}`}
+                    max={field.max}
+                    maxLength={field.maxLength}
+                    min={field.min}
+                    minLength={field.minLength}
                     type={field.type || 'text'}
                     required={field.required}
                     value={form[field.name] ?? ''}

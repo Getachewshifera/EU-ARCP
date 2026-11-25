@@ -2,12 +2,14 @@ import AdminResourcePage from '../../components/admin/AdminResourcePage.jsx'
 import { formatAdminDate } from '../../components/admin/adminData.js'
 
 const fields = [
-  { name: 'name', label: 'Category name', required: true },
-  { name: 'description', label: 'Description', type: 'textarea' },
+  { name: 'name', label: 'Category name', required: true, maxLength: 100 },
+  { name: 'slug', label: 'Category slug', maxLength: 120 },
+  { name: 'description', label: 'Description', type: 'textarea', maxLength: 1000 },
 ]
 
 const columns = [
   { key: 'name', label: 'Category' },
+  { key: 'slug', label: 'Slug' },
   { key: 'description', label: 'Description' },
   { key: 'createdAt', label: 'Added', render: (category) => formatAdminDate(category.createdAt) },
 ]

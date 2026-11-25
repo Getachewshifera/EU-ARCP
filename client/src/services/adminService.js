@@ -10,6 +10,7 @@ const resourcePaths = {
   categories: '/categories',
   groups: '/groups',
   settings: '/settings',
+  users: '/users',
 }
 
 function getResourcePath(resource) {

@@ -1,33 +1,33 @@
 import AdminResourcePage from '../../components/admin/AdminResourcePage.jsx'
 import { displayValue, formatAdminDate } from '../../components/admin/adminData.js'
+import useLanguage from '../../hooks/useLanguage.js'
 
 const fields = [
   { name: 'name', label: 'Group name', required: true },
   { name: 'description', label: 'Description', type: 'textarea' },
   {
-    name: 'visibility',
-    label: 'Visibility',
-    type: 'select',
-    options: [
-      { value: 'public', label: 'Public' },
-      { value: 'private', label: 'Private' },
-    ],
+    name: 'course',
+    label: 'Course',
+    maxLength: 160,
   },
-]
-
-const columns = [
-  { key: 'name', label: 'Group' },
-  { key: 'owner', label: 'Owner', render: (group) => displayValue(group.owner || group.createdBy) },
-  { key: 'visibility', label: 'Visibility' },
-  { key: 'members', label: 'Members', render: (group) => group.members?.length ?? group.memberCount ?? 0 },
-  { key: 'createdAt', label: 'Created', render: (group) => formatAdminDate(group.createdAt) },
+  { name: 'isPrivate', label: 'Visibility', type: 'checkbox', checkboxLabel: 'Private group', defaultValue: false },
 ]
 
 function Groups() {
+  const { t } = useLanguage()
+  const columns = [
+    { key: 'name', label: 'Group' },
+    { key: 'owner', label: 'Owner', render: (group) => displayValue(group.owner || group.createdBy) },
+    { key: 'isPrivate', label: 'Visibility', render: (group) => t(group.isPrivate ? 'Private' : 'Public') },
+    { key: 'members', label: 'Members', render: (group) => group.members?.length ?? group.memberCount ?? 0 },
+    { key: 'createdAt', label: 'Created', render: (group) => formatAdminDate(group.createdAt) },
+  ]
+
   return (
     <AdminResourcePage
       columns={columns}
       description="Review and maintain study groups across the platform."
+      createLabel="Create group"
       fields={fields}
       resource="groups"
       title="Groups"

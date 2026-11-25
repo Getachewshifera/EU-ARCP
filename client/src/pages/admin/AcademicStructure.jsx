@@ -6,34 +6,40 @@ const structures = {
   colleges: {
     label: 'Colleges',
     fields: [
-      { name: 'name', label: 'College name', required: true },
-      { name: 'universityId', label: 'University ID', required: true },
-      { name: 'description', label: 'Description', type: 'textarea' },
+      { name: 'name', label: 'College name', required: true, maxLength: 160 },
+      { name: 'university', label: 'University', type: 'select', optionsResource: 'universities', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', maxLength: 2000 },
     ],
   },
   departments: {
     label: 'Departments',
     fields: [
-      { name: 'name', label: 'Department name', required: true },
-      { name: 'collegeId', label: 'College ID', required: true },
-      { name: 'description', label: 'Description', type: 'textarea' },
+      { name: 'name', label: 'Department name', required: true, maxLength: 160 },
+      { name: 'university', label: 'University', type: 'select', optionsResource: 'universities', required: true },
+      { name: 'college', label: 'College', type: 'select', optionsResource: 'colleges', dependsOn: 'university', optionParentField: 'university', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', maxLength: 2000 },
     ],
   },
   programs: {
     label: 'Programs',
     fields: [
-      { name: 'name', label: 'Program name', required: true },
-      { name: 'departmentId', label: 'Department ID', required: true },
-      { name: 'degree', label: 'Degree' },
+      { name: 'name', label: 'Program name', required: true, maxLength: 160 },
+      { name: 'department', label: 'Department', type: 'select', optionsResource: 'departments', required: true },
+      { name: 'degree', label: 'Degree', maxLength: 80 },
+      { name: 'duration', label: 'Duration in years', type: 'number', min: 1, max: 20 },
+      { name: 'description', label: 'Description', type: 'textarea', maxLength: 2000 },
     ],
   },
   courses: {
     label: 'Courses',
     fields: [
-      { name: 'code', label: 'Course code', required: true },
-      { name: 'title', label: 'Course title', required: true },
-      { name: 'programId', label: 'Program ID', required: true },
-      { name: 'description', label: 'Description', type: 'textarea' },
+      { name: 'name', label: 'Course name', required: true, maxLength: 160 },
+      { name: 'code', label: 'Course code', maxLength: 30 },
+      { name: 'department', label: 'Department', type: 'select', optionsResource: 'departments' },
+      { name: 'program', label: 'Program', type: 'select', optionsResource: 'programs', dependsOn: 'department', optionParentField: 'department' },
+      { name: 'semester', label: 'Semester', maxLength: 80 },
+      { name: 'year', label: 'Year', type: 'number', min: 1, max: 20 },
+      { name: 'description', label: 'Description', type: 'textarea', maxLength: 2000 },
     ],
   },
 }
