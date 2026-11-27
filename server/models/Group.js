@@ -5,6 +5,8 @@ const schema = new mongoose.Schema({
   title: { type: String, trim: true, maxlength: 160 },
   description: { type: String, trim: true, maxlength: 2000 },
   course: { type: String, trim: true, maxlength: 160 },
+  groupType: { type: String, enum: ['university', 'department', 'course', 'class', 'custom'], default: 'custom' },
+  imagePath: { type: String, trim: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   admins: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

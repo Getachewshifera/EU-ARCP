@@ -20,9 +20,14 @@ async function withServer(run) {
 
 test('protected API routes reject unauthenticated requests before database access', async () => {
   await withServer(async (baseUrl) => {
-    const [userResponse, adminResponse, resourceWriteResponse, deleteUserResponse, postWriteResponse, appearanceWriteResponse, maintenanceWriteResponse, materialDownloadResponse] = await Promise.all([
+    const [userResponse, adminResponse, passwordResetResponse, resourceWriteResponse, deleteUserResponse, postWriteResponse, appearanceWriteResponse, maintenanceWriteResponse, chatSettingsWriteResponse, privateMessagesResponse, groupMessagesResponse, groupReactionResponse, materialDownloadResponse, hideConversationResponse, pinConversationResponse, blockConversationResponse, reactionResponse, deleteMessageResponse] = await Promise.all([
       fetch(`${baseUrl}/api/users/me`),
       fetch(`${baseUrl}/api/admin/dashboard`),
+      fetch(`${baseUrl}/api/admin/users/password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'student-104' }),
+      }),
       fetch(`${baseUrl}/api/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,17 +48,56 @@ test('protected API routes reject unauthenticated requests before database acces
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: true, message: 'Maintenance in progress.' }),
       }),
+      fetch(`${baseUrl}/api/site/chat`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: false }),
+      }),
+      fetch(`${baseUrl}/api/private-messages/conversations`),
+      fetch(`${baseUrl}/api/groups/507f1f77bcf86cd799439011/messages`),
+      fetch(`${baseUrl}/api/groups/507f1f77bcf86cd799439011/messages/507f1f77bcf86cd799439012/reactions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji: '👍' }),
+      }),
       fetch(`${baseUrl}/api/materials/507f1f77bcf86cd799439011/download`),
+      fetch(`${baseUrl}/api/private-messages/conversations/507f1f77bcf86cd799439011:507f1f77bcf86cd799439012`, { method: 'DELETE' }),
+      fetch(`${baseUrl}/api/private-messages/conversations/507f1f77bcf86cd799439011:507f1f77bcf86cd799439012/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: true }),
+      }),
+      fetch(`${baseUrl}/api/private-messages/conversations/507f1f77bcf86cd799439011:507f1f77bcf86cd799439012/block`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocked: true }),
+      }),
+      fetch(`${baseUrl}/api/private-messages/conversations/507f1f77bcf86cd799439011:507f1f77bcf86cd799439012/507f1f77bcf86cd799439013/reactions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji: '👍' }),
+      }),
+      fetch(`${baseUrl}/api/private-messages/conversations/507f1f77bcf86cd799439011:507f1f77bcf86cd799439012/507f1f77bcf86cd799439013?scope=me`, { method: 'DELETE' }),
     ]);
 
     assert.equal(userResponse.status, 401);
     assert.equal(adminResponse.status, 401);
+    assert.equal(passwordResetResponse.status, 401);
     assert.equal(resourceWriteResponse.status, 401);
     assert.equal(deleteUserResponse.status, 401);
     assert.equal(postWriteResponse.status, 401)
     assert.equal(appearanceWriteResponse.status, 401)
     assert.equal(maintenanceWriteResponse.status, 401)
+    assert.equal(chatSettingsWriteResponse.status, 401)
+    assert.equal(privateMessagesResponse.status, 401)
+    assert.equal(groupMessagesResponse.status, 401)
+    assert.equal(groupReactionResponse.status, 401)
     assert.equal(materialDownloadResponse.status, 401)
+    assert.equal(hideConversationResponse.status, 401)
+    assert.equal(pinConversationResponse.status, 401)
+    assert.equal(blockConversationResponse.status, 401)
+    assert.equal(reactionResponse.status, 401)
+    assert.equal(deleteMessageResponse.status, 401)
   });
 });
 

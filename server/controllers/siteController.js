@@ -12,9 +12,37 @@ const DEFAULT_APPEARANCE = {
 async function getAppearance(_request, response, next) {
   try {
     const appearance = await SiteAppearance.findOne({ key: 'main' })
-      .select('primaryColor backgroundColor')
+      .select('primaryColor backgroundColor chatEnabled')
       .lean();
     return response.json({ appearance: appearance || DEFAULT_APPEARANCE });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function getChatStatus(_request, response, next) {
+  try {
+    const settings = await SiteAppearance.findOne({ key: 'main' }).select('chatEnabled').lean();
+    return response.json({ enabled: settings?.chatEnabled !== false });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateChatStatus(request, response, next) {
+  if (typeof request.body?.enabled !== 'boolean') {
+    return response.status(400).json({ message: 'Chat enabled state must be a boolean.' });
+  }
+  try {
+    const settings = await SiteAppearance.findOneAndUpdate(
+      { key: 'main' },
+      {
+        $set: { chatEnabled: request.body.enabled },
+        $setOnInsert: { key: 'main', ...DEFAULT_APPEARANCE },
+      },
+      { returnDocument: 'after', upsert: true, runValidators: true, setDefaultsOnInsert: true },
+    ).select('chatEnabled').lean();
+    return response.json({ enabled: settings.chatEnabled !== false });
   } catch (error) {
     return next(error);
   }
@@ -76,4 +104,11 @@ async function updateMaintenance(request, response, next) {
   }
 }
 
-module.exports = { getAppearance, updateAppearance, getMaintenance, updateMaintenance };
+module.exports = {
+  getAppearance,
+  updateAppearance,
+  getChatStatus,
+  updateChatStatus,
+  getMaintenance,
+  updateMaintenance,
+};

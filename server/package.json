@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "node --watch server.js",
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "test": "node --test tests/*.test.js",
     "seed:admin": "node seeders/adminSeeder.js"
   },
@@ -16,6 +16,17 @@
     "express": "^5.3.0",
     "mongoose": "^9.11.2",
     "multer": "^2.4.0",
-    "nodemailer": "^10.0.16"
-  }
+    "nodemailer": "^10.0.16",
+    "nodemon": "^3.1.14",
+    "socket.io": "^4.8.4",
+    "supabase": "^3.4.0"
+  },
+  "description": "",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }

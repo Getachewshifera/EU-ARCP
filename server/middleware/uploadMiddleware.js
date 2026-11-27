@@ -49,6 +49,63 @@ const uploadAvatar = multer({
   },
 });
 
+const uploadChatAttachment = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 1 },
+  fileFilter: (_request, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (!materialTypes.get(extension)?.has(file.mimetype)) {
+      const error = new Error('Chat attachments must be PDF, DOC, DOCX, PPT, or PPTX files.');
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
+const chatImageTypes = new Map([
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.png', 'image/png'],
+  ['.webp', 'image/webp'],
+]);
+
+const uploadGroupChatAttachment = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 1 },
+  fileFilter: (_request, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    const isDocument = materialTypes.get(extension)?.has(file.mimetype);
+    const isImage = chatImageTypes.get(extension) === file.mimetype;
+    if (!isDocument && !isImage) {
+      const error = new Error('Group chat attachments must be PDF, DOC, DOCX, PPT, PPTX, JPEG, PNG, or WebP files.');
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
+const uploadGroupImage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_request, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    const allowed = new Map([
+      ['.jpg', 'image/jpeg'],
+      ['.jpeg', 'image/jpeg'],
+      ['.png', 'image/png'],
+      ['.webp', 'image/webp'],
+    ]);
+    if (allowed.get(extension) !== file.mimetype) {
+      const error = new Error('Group images must be JPEG, PNG, or WebP files.');
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
 const postImageStorage = multer.diskStorage({
   destination: (_request, _file, callback) => callback(null, postImageDirectory),
   filename: (_request, file, callback) => {
@@ -81,6 +138,9 @@ const uploadPostImage = multer({
 module.exports = {
   uploadMaterial,
   uploadAvatar,
+  uploadChatAttachment,
+  uploadGroupChatAttachment,
+  uploadGroupImage,
   uploadPostImage,
   uploadDirectory,
   avatarDirectory,

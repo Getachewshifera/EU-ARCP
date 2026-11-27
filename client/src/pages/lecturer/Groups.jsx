@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import lecturerService from '../../services/lecturerService.js'
+import chatService from '../../services/chatService.js'
 import { EmptyState, PageHeader, RequestState } from '../../components/portal/lecturer/LecturerUI.jsx'
 import { errorMessage, itemId, listFrom, unwrap } from '../../components/portal/lecturer/lecturerUtils.js'
 import useLanguage from '../../hooks/useLanguage.js'
@@ -8,7 +9,8 @@ import useLanguage from '../../hooks/useLanguage.js'
 function LecturerGroups() {
   const { t } = useLanguage()
   const [groups, setGroups] = useState([])
-  const [form, setForm] = useState({ name: '', description: '' })
+  const [form, setForm] = useState({ name: '', description: '', groupType: 'custom' })
+  const [groupImage, setGroupImage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -29,8 +31,24 @@ function LecturerGroups() {
   async function createGroup(event) {
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
     try {
-      await lecturerService.createGroup(form)
-      setForm({ name: '', description: '' })
+      const response = await lecturerService.createGroup(form)
+      const group = response.data?.item
+      const id = group?._id || group?.id
+      const selectedImage = groupImage
+      setForm({ name: '', description: '', groupType: 'custom' })
+      setGroupImage(null)
+      if (selectedImage && id) {
+        const data = new FormData()
+        data.append('image', selectedImage)
+        try {
+          await chatService.uploadGroupImage(id, data)
+        } catch (imageError) {
+          setNotice(t('Group created, but its image could not be uploaded.'))
+          setError(errorMessage(imageError, t('Unable to upload the group image.')))
+          await load()
+          return
+        }
+      }
       setNotice(t('Group created.'))
       await load()
     } catch (requestError) { setError(errorMessage(requestError, t('Unable to create the group.'))) }
@@ -58,6 +76,8 @@ function LecturerGroups() {
         <div className="card-body"><div className="row g-3">
           <div className="col-md-4"><label className="form-label" htmlFor="group-name">{t('Group name')}</label><input id="group-name" className="form-control" required maxLength="120" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
           <div className="col-md-8"><label className="form-label" htmlFor="group-description">{t('Description')}</label><input id="group-description" className="form-control" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
+          <div className="col-md-4"><label className="form-label" htmlFor="group-type">{t('Group type')}</label><select id="group-type" className="form-select" value={form.groupType} onChange={(event) => setForm({ ...form, groupType: event.target.value })}>{['university', 'department', 'course', 'class', 'custom'].map((type) => <option key={type} value={type}>{t(type[0].toUpperCase() + type.slice(1))}</option>)}</select></div>
+          <div className="col-md-8"><label className="form-label" htmlFor="group-image">{t('Group profile image')}</label><input id="group-image" className="form-control" accept="image/jpeg,image/png,image/webp" type="file" onChange={(event) => setGroupImage(event.target.files?.[0] || null)} /></div>
         </div></div>
         <div className="card-footer bg-white text-end"><button className="btn btn-primary" type="submit" disabled={saving}>{t(saving ? 'Creating…' : 'Create group')}</button></div>
       </form>

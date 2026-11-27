@@ -3,10 +3,11 @@ import useAuth from '../../hooks/useAuth.js'
 import useLanguage from '../../hooks/useLanguage.js'
 import LanguageToggle from '../common/LanguageToggle.jsx'
 import ThemeToggle from '../common/ThemeToggle.jsx'
-import PostFeed from '../posts/PostFeed.jsx'
 
 const navigation = [
   { label: 'Overview', to: '/admin', end: true },
+  { label: 'My profile', to: '/admin/profile' },
+  { label: 'Change password', to: '/admin/password' },
   { label: 'Users', to: '/admin/users' },
   { label: 'Registration requests', to: '/admin/registrations' },
   { label: 'Universities', to: '/admin/universities' },
@@ -14,6 +15,7 @@ const navigation = [
   { label: 'Categories', to: '/admin/categories' },
   { label: 'Materials', to: '/admin/materials' },
   { label: 'Groups', to: '/admin/groups' },
+  { label: 'Messages', to: '/admin/messages' },
   { label: 'Reports', to: '/admin/reports' },
   { label: 'Posts', to: '/admin/posts' },
   { label: 'Contact messages', to: '/admin/contact-messages' },
@@ -68,7 +70,6 @@ function AdminLayout() {
           </div>
         </header>
         <div className="admin-content">
-          <PostFeed compact />
           <div key={location.pathname} className="page-transition-wrapper">
             <Outlet />
           </div>

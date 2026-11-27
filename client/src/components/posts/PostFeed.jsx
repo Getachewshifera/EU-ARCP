@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import postService from '../../services/postService.js'
 import useLanguage from '../../hooks/useLanguage.js'
 
-function PostFeed({ compact = false }) {
+function PostFeed({ compact = false, refreshKey }) {
   const { t, language } = useLanguage()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -21,7 +21,7 @@ function PostFeed({ compact = false }) {
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [])
+  }, [refreshKey])
 
   if (loading || (!posts.length && !error)) return null
 

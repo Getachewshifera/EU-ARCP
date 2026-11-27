@@ -1,12 +1,14 @@
 import api from './api.js'
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '')
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '').replace(/\/$/, '')
 
 // Convert a stored profilePhoto filename to a full URL
 export function getAvatarUrl(profilePhoto) {
   if (!profilePhoto) return ''
-  if (profilePhoto.startsWith('http')) return profilePhoto
-  return `${API_BASE}/avatars/${profilePhoto}`
+  if (/^https?:\/\//i.test(profilePhoto)) return profilePhoto
+  const legacyPhoto = profilePhoto.match(/^\/uploads\/(\d+-[a-f\d]+\.(?:jpe?g|png))$/i)
+  if (legacyPhoto) return `${API_BASE}/legacy-avatars/${encodeURIComponent(legacyPhoto[1])}`
+  return `${API_BASE}/avatars/${profilePhoto.replace(/^\/avatars\//, '')}`
 }
 
 const byId = (path, id) => `${path}/${encodeURIComponent(id)}`

@@ -35,7 +35,11 @@ function safeUser(user) {
 async function listUsers(request, response, next) {
   try {
     const users = await User.find()
-      .select('-password')
+      .select('-password -otpHash -otpExpiresAt -resetTokenHash -resetTokenExpiresAt -otpPurpose -otpAttempts -otpLockedUntil')
+      .populate('university', 'name')
+      .populate('college', 'name')
+      .populate('department', 'name')
+      .populate('program', 'name')
       .sort({ createdAt: -1 })
       .limit(Math.min(500, Math.max(1, Number.parseInt(request.query.limit, 10) || 500)))
       .lean();

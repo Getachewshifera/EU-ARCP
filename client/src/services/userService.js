@@ -14,6 +14,21 @@ const userService = {
   changePassword(data) {
     return api.patch('/users/me/password', data)
   },
+  uploadPhoto(formData) {
+    return api.patch('/users/me/photo', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  listUniversities() {
+    return api.get('/universities')
+  },
+  listColleges(university) {
+    return api.get('/academic/colleges', { params: { university } })
+  },
+  listDepartments(college) {
+    return api.get('/academic/departments', { params: { college } })
+  },
+  listPrograms(department) {
+    return api.get('/academic/programs', { params: { department } })
+  },
 }
 
 export default userService

@@ -6,6 +6,7 @@ const schema = new mongoose.Schema({
   primaryColor: { type: String, required: true },
   backgroundColor: { type: String, required: true },
   maintenanceMode: { type: Boolean, default: false },
+  chatEnabled: { type: Boolean, default: true },
   maintenanceMessage: {
     type: String,
     default: 'The platform is temporarily unavailable while scheduled maintenance is in progress. Please try again later.',

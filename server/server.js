@@ -1,6 +1,7 @@
 // Purpose: Creates the Express app, configures middleware, exposes the health check, and starts the API.
 const cors = require('cors');
 const express = require('express');
+const http = require('http');
 
 const { PORT, CLIENT_ORIGIN, MONGODB_URI } = require('./config/environment');
 const { verifyStorageConnection } = require('./config/storage');
@@ -24,6 +25,7 @@ const settingRoutes = require('./routes/settingRoutes');
 const siteRoutes = require('./routes/siteRoutes');
 const postRoutes = require('./routes/postRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const { attachSocketServer } = require('./sockets/socket');
 const maintenanceMiddleware = require('./middleware/maintenanceMiddleware');
 require('./middleware/uploadMiddleware');
 const notFoundMiddleware = require('./middleware/notFoundMiddleware');
@@ -44,8 +46,17 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 const path = require('path');
-const { avatarDirectory } = require('./middleware/uploadMiddleware');
+const { avatarDirectory, uploadDirectory } = require('./middleware/uploadMiddleware');
 app.use('/avatars', express.static(avatarDirectory));
+app.get('/legacy-avatars/:filename', (request, response, next) => {
+  const { filename } = request.params;
+  if (!/^\d+-[a-f\d]+\.(?:jpe?g|png)$/i.test(filename)) return response.sendStatus(404);
+  return response.sendFile(path.join(uploadDirectory, filename), (error) => {
+    if (!error) return;
+    if (error.code === 'ENOENT') return response.sendStatus(404);
+    return next(error);
+  });
+});
 app.use('/api', maintenanceMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/site', siteRoutes);
@@ -81,7 +92,9 @@ async function startServer() {
     await verifyStorageConnection();
     await connectDatabase(MONGODB_URI);
     await seedUniversities();
-    app.listen(PORT, () => {
+    const httpServer = http.createServer(app);
+    attachSocketServer(httpServer);
+    httpServer.listen(PORT, () => {
       console.log(`EU-ARCP API listening on port ${PORT}`);
     });
   } catch (error) {

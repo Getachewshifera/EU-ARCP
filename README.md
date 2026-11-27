@@ -38,13 +38,15 @@ npm run build
 
 ## Admin client
 
-The client includes an administration workspace at `/admin`, with pages for the dashboard, users, registration requests, universities, academic structure, categories, materials, groups, reports, activity logs, and system settings. Set `VITE_API_URL` to the API base URL; it defaults to `http://localhost:5000/api`.
+The client includes an administration workspace at `/admin`, with pages for the dashboard, users, registration requests, universities, academic structure, categories, materials, groups, private messages, reports, activity logs, and system settings. Administrators can moderate group chat and enable or disable chat platform-wide in System settings. Set `VITE_API_URL` to the API base URL; it defaults to `http://localhost:5000/api`.
 
 All administrative routes require an unexpired HS256 bearer token for an active, approved admin account. Admin APIs include `/admin/dashboard`, `/admin/activity-logs`, `/users`, `/registrations`, `/universities`, `/academic/*`, `/categories`, `/materials`, `/groups`, `/reports`, and `/settings`. User role/status updates are constrained; admins can permanently delete accounts, but cannot delete themselves or the last active administrator. Deleting an account also removes that user's uploaded materials and files, messages, notifications, and owned groups. Administrative frontend routes are not an authorization boundary—the API enforces access.
 
 ## Server API
 
 Auth endpoints support registration, email verification, sign-in, password recovery, and sign-out. Registration remains pending until email verification and admin approval. Profile endpoints support account updates and password changes. Material uploads accept PDF, Office, text, JPEG, and PNG files up to 20 MB; uploaded files remain private unless approved. Group membership/chat, private conversations, personal notifications, reports, and student/lecturer dashboards require bearer authentication. Collection lists return `{ items: [...] }`; generic resource routes also include `total`, `page`, and `pages`.
+
+Group and private conversations use MongoDB-backed REST endpoints for authorized message storage and Socket.IO for live messages, presence, typing indicators, and private delivery/read receipts. Chat documents (PDF, DOC, DOCX, PPT, and PPTX, up to 20 MB) and group images are stored in the configured private Supabase bucket and served through short-lived signed URLs. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_BUCKET` on the server, `CLIENT_ORIGIN` to the exact frontend origin(s), and the client `VITE_API_URL` to the API base URL. Administrators can disable all group and private chat from **Admin → System settings**; the server enforces this for REST and Socket.IO operations.
 
 Public registration-status checks accept an email address and reveal the latest application status. For deployment, configure HTTPS, a strong `JWT_SECRET`, SMTP delivery, MongoDB network restrictions, and an explicit `CLIENT_ORIGIN`.
 
@@ -115,6 +117,7 @@ Components are reusable interface pieces intended to be shared by multiple pages
 | `client/src/components/groups/GroupMembers.jsx` | Group member list and membership actions. |
 | `client/src/components/groups/GroupChat.jsx` | Chat interface embedded in a group. |
 | `client/src/components/chat/ChatWindow.jsx` | Conversation view that combines messages and message entry. |
+| `client/src/components/chat/GroupChat.jsx` | Paginated group conversation with live messages, replies, and moderation. |
 | `client/src/components/chat/MessageList.jsx` | Rendered list of messages in a conversation. |
 | `client/src/components/chat/MessageInput.jsx` | Composer for sending a chat message. |
 | `client/src/components/chat/ConversationList.jsx` | List for choosing a private conversation. |
@@ -168,6 +171,8 @@ Components are reusable interface pieces intended to be shared by multiple pages
 | `client/src/pages/admin/Categories.jsx` | Manage material categories. |
 | `client/src/pages/admin/Materials.jsx` | Moderate and manage platform materials. |
 | `client/src/pages/admin/Groups.jsx` | Manage study groups. |
+| `client/src/pages/admin/GroupChat.jsx` | Review and moderate messages in a group conversation. |
+| `client/src/pages/admin/PrivateMessages.jsx` | Administrator private messaging page. |
 | `client/src/pages/admin/Reports.jsx` | Review and process user-submitted reports. |
 | `client/src/pages/admin/ActivityLogs.jsx` | Review platform activity records. |
 | `client/src/pages/admin/SystemSettings.jsx` | View and update system settings. |
@@ -231,6 +236,7 @@ Each model file is intended to define the data shape and persistence behavior fo
 | `server/models/Group.js` | Study groups and membership data. |
 | `server/models/Message.js` | Group chat messages. |
 | `server/models/PrivateMessage.js` | Messages in private conversations. |
+| `server/models/Conversation.js` | Persistent private conversation participants and activity. |
 | `server/models/Notification.js` | User notifications. |
 | `server/models/Report.js` | User-submitted reports and their review status. |
 | `server/models/ActivityLog.js` | Auditable platform activity records. |
@@ -280,6 +286,8 @@ Each model file is intended to define the data shape and persistence behavior fo
 | `server/services/emailService.js` | Outbound email delivery. |
 | `server/services/materialService.js` | Material business logic and data access. |
 | `server/services/fileService.js` | File storage and retrieval operations. |
+| `server/services/chatAttachmentService.js` | Private chat file uploads, cleanup, and signed download URLs. |
+| `server/services/chatAvailability.js` | Reads the administrator-controlled global chat switch. |
 | `server/services/categoryValidationService.js` | Validation of material category references and rules. |
 | `server/services/searchService.js` | Search and filtering logic. |
 | `server/services/notificationService.js` | Notification creation and delivery logic. |

@@ -4,6 +4,10 @@ const Group = require("../models/Group");
 const Message = require("../models/Message");
 const User = require("../models/User");
 const { createNotification } = require("../services/notificationService");
+const { getSignedChatUrl, removeChatFile, uploadGroupChatAttachment, uploadGroupImage } = require("../services/chatAttachmentService");
+const { emitToGroup, removeUserFromRoom } = require("../sockets/socket");
+
+const ALLOWED_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "👏"];
 
 function isMember(group, userId) {
   return group.members.some(
@@ -32,11 +36,13 @@ function canDelete(group, user) {
   );
 }
 
-function withPermissions(group, user) {
+async function withPermissions(group, user) {
   const item = typeof group.toObject === "function" ? group.toObject() : group;
   const owner = String(item.owner?._id ?? item.owner) === String(user._id);
+  const imageUrl = item.imagePath ? await getSignedChatUrl(item.imagePath) : "";
   return {
     ...item,
+    imageUrl,
     isMember: isMember(item, user._id),
     permissions: {
       canEdit: canManage(item, user),
@@ -85,7 +91,7 @@ async function list(request, response, next) {
       .limit(100)
       .lean();
     return response.json({
-      items: items.map((item) => withPermissions(item, request.user)),
+      items: await Promise.all(items.map((item) => withPermissions(item, request.user))),
     });
   } catch (error) {
     return next(error);
@@ -108,7 +114,7 @@ async function get(request, response, next) {
     ) {
       return response.status(404).json({ message: "Group was not found." });
     }
-    return response.json({ item: withPermissions(group, request.user) });
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -120,6 +126,7 @@ async function create(request, response, next) {
     title,
     description = "",
     course = "",
+    groupType = "custom",
     isPrivate = false,
   } = request.body || {};
   const groupName =
@@ -134,6 +141,7 @@ async function create(request, response, next) {
     typeof description !== "string" ||
     description.length > 2000 ||
     typeof course !== "string" ||
+    !["university", "department", "course", "class", "custom"].includes(groupType) ||
     typeof isPrivate !== "boolean"
   ) {
     return response
@@ -146,13 +154,14 @@ async function create(request, response, next) {
       title: groupName,
       description: description.trim(),
       course: typeof course === "string" ? course.trim() : "",
+      groupType,
       isPrivate: Boolean(isPrivate),
       owner: request.user._id,
       members: [request.user._id],
     });
     return response
       .status(201)
-      .json({ item: withPermissions(group, request.user) });
+      .json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -161,7 +170,7 @@ async function create(request, response, next) {
 async function update(request, response, next) {
   if (!mongoose.isValidObjectId(request.params.id))
     return response.status(400).json({ message: "Group id is invalid." });
-  const allowed = ["name", "title", "description", "course", "isPrivate"];
+  const allowed = ["name", "title", "description", "course", "groupType", "isPrivate"];
   const body = request.body || {};
   if (
     typeof body !== "object" ||
@@ -214,11 +223,16 @@ async function update(request, response, next) {
         .status(400)
         .json({ message: "isPrivate must be a boolean." });
     }
+    if (body.groupType !== undefined
+      && !["university", "department", "course", "class", "custom"].includes(body.groupType)) {
+      return response.status(400).json({ message: "Group type is invalid." });
+    }
     if (body.description !== undefined) group.description = body.description;
     if (body.course !== undefined) group.course = body.course;
     if (body.isPrivate !== undefined) group.isPrivate = body.isPrivate;
+    if (body.groupType !== undefined) group.groupType = body.groupType;
     await group.save();
-    return response.json({ item: withPermissions(group, request.user) });
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -235,10 +249,13 @@ async function remove(request, response, next) {
       return response
         .status(403)
         .json({ message: "Only the group owner can delete this group." });
-    await Promise.all([
-      group.deleteOne(),
-      Message.deleteMany({ group: group._id }),
-    ]);
+    const messages = await Message.find({ group: group._id }).select("attachments").lean();
+    const filePaths = messages.flatMap((message) => (message.attachments || [])
+      .map((attachment) => attachment.storagePath));
+    if (group.imagePath) filePaths.push(group.imagePath);
+    await Promise.all(filePaths.map((storagePath) => removeChatFile(storagePath)));
+    await Promise.all([group.deleteOne(), Message.deleteMany({ group: group._id })]);
+    emitToGroup(group._id, "group:deleted", { groupId: String(group._id) });
     return response.json({ message: "Group deleted." });
   } catch (error) {
     return next(error);
@@ -288,7 +305,7 @@ async function updateAdmin(request, response, next) {
       group.admins.splice(existingIndex, 1);
     await group.save();
     await group.populate(["owner", "members", "admins"]);
-    return response.json({ item: withPermissions(group, request.user) });
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -330,8 +347,40 @@ async function inviteMember(request, response, next) {
       group.members.push(user._id);
       await group.save();
     }
+    emitToGroup(group._id, "group:member-added", {
+      groupId: String(group._id),
+      userId: String(user._id),
+    });
     await group.populate(["owner", "members", "admins"]);
-    return response.json({ item: withPermissions(group, request.user) });
+    return response.json({ item: await withPermissions(group, request.user) });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function removeMember(request, response, next) {
+  const { id, userId } = request.params;
+  if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(userId)) {
+    return response.status(400).json({ message: "Group and user ids must be valid." });
+  }
+  try {
+    const group = await Group.findById(id);
+    if (!group) return response.status(404).json({ message: "Group was not found." });
+    if (!canManage(group, request.user)) {
+      return response.status(403).json({ message: "Only a group admin can remove members." });
+    }
+    if (String(group.owner) === userId) {
+      return response.status(400).json({ message: "The group owner cannot be removed." });
+    }
+    if (!isMember(group, userId)) {
+      return response.status(404).json({ message: "Group member was not found." });
+    }
+    group.members = group.members.filter((memberId) => String(memberId) !== userId);
+    group.admins = group.admins.filter((adminId) => String(adminId) !== userId);
+    await group.save();
+    await removeUserFromRoom(userId, `group:${group._id}`);
+    emitToGroup(group._id, "group:member-removed", { groupId: String(group._id), userId });
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -357,8 +406,12 @@ async function join(request, response, next) {
         `${request.user.name || request.user.email} joined ${group.name}.`,
         `/lecturer/groups/${group._id}`,
       );
+      emitToGroup(group._id, "group:member-added", {
+        groupId: String(group._id),
+        userId: String(request.user._id),
+      });
     }
-    return response.json({ item: group });
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -386,7 +439,12 @@ async function leave(request, response, next) {
       (adminId) => String(adminId) !== String(request.user._id),
     );
     await group.save();
-    return response.json({ item: group });
+    await removeUserFromRoom(request.user._id, `group:${group._id}`);
+    emitToGroup(group._id, "group:member-removed", {
+      groupId: String(group._id),
+      userId: String(request.user._id),
+    });
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -422,46 +480,223 @@ async function listMessages(request, response, next) {
     return response.status(400).json({ message: "Group id is invalid." });
   try {
     const group = await Group.findById(request.params.id);
-    if (!group || !isMember(group, request.user._id)) {
+    if (!group || (!isMember(group, request.user._id) && request.user.role !== "admin")) {
       return response
         .status(403)
         .json({ message: "Join the group to view its messages." });
     }
-    const items = await Message.find({ group: group._id })
-      .populate("sender", "name email")
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .lean();
-    return response.json({ items: items.reverse() });
+    const filter = { group: group._id };
+    if (request.query.beforeId) {
+      if (!mongoose.isValidObjectId(request.query.beforeId)) {
+        return response.status(400).json({ message: "Message cursor is invalid." });
+      }
+      filter._id = { $lt: request.query.beforeId };
+    }
+    const parsedLimit = Number.parseInt(request.query.limit, 10);
+    const limit = Math.min(100, Math.max(1, Number.isNaN(parsedLimit) ? 50 : parsedLimit));
+    const records = await Message.find(filter)
+      .populate("sender", "name email role profilePhoto")
+      .populate({ path: "reactions.user", select: "name firstName lastName" })
+      .populate({
+        path: "replyTo",
+        select: "body sender createdAt deletedAt attachments.name attachments.mimeType attachments.size",
+        populate: { path: "sender", select: "name email role profilePhoto" },
+      })
+      .sort({ _id: -1 })
+      .limit(limit + 1);
+    const hasMore = records.length > limit;
+    return response.json({ items: records.slice(0, limit).reverse().map(safeGroupMessage), hasMore });
   } catch (error) {
     return next(error);
   }
 }
 
+function safeGroupMessage(message) {
+  const record = message.toObject ? message.toObject() : { ...message };
+  record.attachments = (record.attachments || []).map(({ _id, name, mimeType, size }) => ({
+    _id,
+    name,
+    mimeType,
+    size,
+  }));
+  if (record.replyTo?.attachments) {
+    record.replyTo.attachments = record.replyTo.attachments.map(({ _id, name, mimeType, size }) => ({
+      _id,
+      name,
+      mimeType,
+      size,
+    }));
+  }
+  return record;
+}
+
 async function sendMessage(request, response, next) {
   if (!mongoose.isValidObjectId(request.params.id))
     return response.status(400).json({ message: "Group id is invalid." });
-  const body =
-    request.body?.body ?? request.body?.message ?? request.body?.content;
-  if (typeof body !== "string" || !body.trim() || body.length > 5000) {
+  const body = request.body?.body ?? request.body?.message ?? request.body?.content ?? "";
+  const replyTo = request.body?.replyTo;
+  if (typeof body !== "string" || body.length > 5000) {
     return response
       .status(400)
-      .json({ message: "Message must contain 1 to 5000 characters." });
+      .json({ message: "Message must contain at most 5000 characters." });
   }
+  if (!body.trim() && !request.file) {
+    return response.status(400).json({ message: "Enter a message or attach a document." });
+  }
+  if (replyTo && !mongoose.isValidObjectId(replyTo)) {
+    return response.status(400).json({ message: "Reply target is invalid." });
+  }
+  let attachment;
   try {
     const group = await Group.findById(request.params.id);
-    if (!group || !isMember(group, request.user._id)) {
+    if (!group || (!isMember(group, request.user._id) && request.user.role !== "admin")) {
       return response
         .status(403)
         .json({ message: "Join the group to send messages." });
     }
+    if (replyTo) {
+      const parent = await Message.findOne({ _id: replyTo, group: group._id, deletedAt: null }).select("_id");
+      if (!parent) return response.status(404).json({ message: "Reply target was not found." });
+    }
+    if (request.file) attachment = await uploadGroupChatAttachment(request.file, String(group._id));
     const item = await Message.create({
       group: group._id,
       sender: request.user._id,
       body: body.trim(),
+      replyTo: replyTo || undefined,
+      attachments: attachment ? [attachment] : [],
     });
-    await item.populate("sender", "name email");
-    return response.status(201).json({ item });
+    await item.populate([
+      { path: "sender", select: "name email role profilePhoto" },
+      {
+        path: "replyTo",
+        select: "body sender createdAt deletedAt attachments.name attachments.mimeType attachments.size",
+        populate: { path: "sender", select: "name email role profilePhoto" },
+      },
+    ]);
+    const message = safeGroupMessage(item);
+    emitToGroup(group._id, "group:message", message);
+    return response.status(201).json({ item: message });
+  } catch (error) {
+    if (attachment) await removeChatFile(attachment.storagePath);
+    return next(error);
+  }
+}
+
+async function getMessageAttachment(request, response, next) {
+  if (!mongoose.isValidObjectId(request.params.id) || !mongoose.isValidObjectId(request.params.messageId)) {
+    return response.status(400).json({ message: "Group or message id is invalid." });
+  }
+  if (!/^\d+$/.test(request.params.attachmentIndex)) {
+    return response.status(400).json({ message: "Attachment index is invalid." });
+  }
+  try {
+    const group = await Group.findById(request.params.id).select("members");
+    if (!group || (!isMember(group, request.user._id) && request.user.role !== "admin")) {
+      return response.status(403).json({ message: "Join the group to access its attachments." });
+    }
+    const message = await Message.findOne({
+      _id: request.params.messageId,
+      group: group._id,
+      deletedAt: null,
+    }).select("attachments");
+    const attachment = message?.attachments[Number(request.params.attachmentIndex)];
+    if (!attachment) return response.status(404).json({ message: "Attachment was not found." });
+    return response.json({ url: await getSignedChatUrl(attachment.storagePath) });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function deleteMessage(request, response, next) {
+  if (!mongoose.isValidObjectId(request.params.id) || !mongoose.isValidObjectId(request.params.messageId)) {
+    return response.status(400).json({ message: "Group or message id is invalid." });
+  }
+  try {
+    const group = await Group.findById(request.params.id);
+    if (!group || (!isMember(group, request.user._id) && request.user.role !== "admin")) {
+      return response.status(403).json({ message: "Join the group to manage its messages." });
+    }
+    const message = await Message.findOne({ _id: request.params.messageId, group: group._id });
+    if (!message) return response.status(404).json({ message: "Message was not found." });
+    if (String(message.sender) !== String(request.user._id) && !canManage(group, request.user)) {
+      return response.status(403).json({ message: "You can only delete your own messages." });
+    }
+    await Promise.all((message.attachments || []).map((attachment) => removeChatFile(attachment.storagePath)));
+    message.body = "";
+    message.attachments = [];
+    message.deletedAt = new Date();
+    message.deletedBy = request.user._id;
+    await message.save();
+    const item = { _id: String(message._id), group: String(group._id), deletedAt: message.deletedAt };
+    emitToGroup(group._id, "group:message-deleted", item);
+    return response.json({ item });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function reactToMessage(request, response, next) {
+  const { id, messageId } = request.params;
+  const emoji = request.body?.emoji;
+  if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(messageId)) {
+    return response.status(400).json({ message: "Group or message id is invalid." });
+  }
+  if (!ALLOWED_REACTIONS.includes(emoji)) {
+    return response.status(400).json({ message: "Reaction is not supported." });
+  }
+  try {
+    const group = await Group.findById(id);
+    if (!group || (!isMember(group, request.user._id) && request.user.role !== "admin")) {
+      return response.status(403).json({ message: "Join the group to react to messages." });
+    }
+    const message = await Message.findOne({ _id: messageId, group: group._id, deletedAt: null });
+    if (!message) return response.status(404).json({ message: "Message was not found." });
+
+    const existingIndex = message.reactions.findIndex(
+      (reaction) => String(reaction.user) === String(request.user._id),
+    );
+    if (existingIndex >= 0 && message.reactions[existingIndex].emoji === emoji) {
+      message.reactions.splice(existingIndex, 1);
+    } else if (existingIndex >= 0) {
+      message.reactions[existingIndex].emoji = emoji;
+    } else {
+      message.reactions.push({ user: request.user._id, emoji });
+    }
+    await message.save();
+    await message.populate([
+      { path: "sender", select: "name email role profilePhoto" },
+      {
+        path: "replyTo",
+        select: "body sender createdAt deletedAt attachments.name attachments.mimeType attachments.size",
+        populate: { path: "sender", select: "name email role profilePhoto" },
+      },
+      { path: "reactions.user", select: "name firstName lastName" },
+    ]);
+    const item = safeGroupMessage(message);
+    emitToGroup(group._id, "group:message-reaction", item);
+    return response.json({ item });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function uploadImage(request, response, next) {
+  if (!mongoose.isValidObjectId(request.params.id)) {
+    return response.status(400).json({ message: "Group id is invalid." });
+  }
+  if (!request.file) return response.status(400).json({ message: "A group image is required." });
+  try {
+    const group = await Group.findById(request.params.id);
+    if (!group) return response.status(404).json({ message: "Group was not found." });
+    if (!canManage(group, request.user)) {
+      return response.status(403).json({ message: "Only a group admin can update its image." });
+    }
+    const previousPath = group.imagePath;
+    group.imagePath = await uploadGroupImage(request.file, String(group._id));
+    await group.save();
+    if (previousPath) await removeChatFile(previousPath);
+    return response.json({ item: await withPermissions(group, request.user) });
   } catch (error) {
     return next(error);
   }
@@ -475,9 +710,14 @@ module.exports = {
   remove,
   updateAdmin,
   inviteMember,
+  removeMember,
   join,
   leave,
   members,
   listMessages,
   sendMessage,
+  getMessageAttachment,
+  deleteMessage,
+  reactToMessage,
+  uploadImage,
 };

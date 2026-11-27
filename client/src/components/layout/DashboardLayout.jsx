@@ -7,7 +7,6 @@ import { getAvatarUrl } from '../../services/studentService.js'
 import useLanguage from '../../hooks/useLanguage.js'
 import LanguageToggle from '../common/LanguageToggle.jsx'
 import ThemeToggle from '../common/ThemeToggle.jsx'
-import PostFeed from '../posts/PostFeed.jsx'
 
 const roleNavigation = {
   student: [
@@ -127,7 +126,6 @@ function DashboardLayout({ role }) {
           </div>
         </header>
         <div className="dashboard-content">
-          <PostFeed compact />
           <div key={location.pathname} className="page-transition-wrapper">
             <Outlet />
           </div>

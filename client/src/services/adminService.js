@@ -28,6 +28,14 @@ const adminService = {
     return api.get('/admin/dashboard')
   },
 
+  getChatSettings() {
+    return api.get('/site/chat')
+  },
+
+  updateChatSettings(enabled) {
+    return api.put('/site/chat', { enabled })
+  },
+
   getPosts() {
     return api.get('/posts/admin')
   },
@@ -54,6 +62,10 @@ const adminService = {
 
   deleteUser(id) {
     return api.delete(`/users/${encodeURIComponent(id)}`)
+  },
+
+  requestUserPasswordReset(username) {
+    return api.post('/admin/users/password-reset', { username })
   },
 
   getRegistrationRequests(params) {

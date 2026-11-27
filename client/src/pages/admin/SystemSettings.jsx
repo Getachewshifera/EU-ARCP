@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AdminResourcePage from '../../components/admin/AdminResourcePage.jsx'
+import PasswordInput from '../../components/common/PasswordInput.jsx'
+import adminService from '../../services/adminService.js'
+import userService from '../../services/userService.js'
+import { getPasswordPolicyError, PASSWORD_HINT, PASSWORD_PATTERN } from '../../utils/passwordPolicy.js'
 import useTheme from '../../hooks/useTheme.js'
 import useLanguage from '../../hooks/useLanguage.js'
 
@@ -167,6 +171,211 @@ function MaintenanceSettings({ maintenance, maintenanceError, updateMaintenance 
   )
 }
 
+function AccountSecuritySettings() {
+  const { t } = useLanguage()
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordNotice, setPasswordNotice] = useState('')
+  const [username, setUsername] = useState('')
+  const [resetSending, setResetSending] = useState(false)
+  const [resetError, setResetError] = useState('')
+  const [resetNotice, setResetNotice] = useState('')
+
+  async function changeOwnPassword(event) {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordNotice('')
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError(t('The new password and confirmation do not match.'))
+      return
+    }
+    const policyError = getPasswordPolicyError(passwordForm.newPassword)
+    if (policyError) {
+      setPasswordError(t(policyError))
+      return
+    }
+
+    setPasswordSaving(true)
+    try {
+      await userService.changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      })
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setPasswordNotice(t('Your password has been changed.'))
+    } catch (requestError) {
+      setPasswordError(t(requestError.response?.data?.message || requestError.message || 'Unable to change your password.'))
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
+  async function sendUserReset(event) {
+    event.preventDefault()
+    setResetError('')
+    setResetNotice('')
+    setResetSending(true)
+    try {
+      const response = await adminService.requestUserPasswordReset(username.trim())
+      setResetNotice(t(response.data?.message || 'Password reset instructions were sent to the user’s registered email.'))
+      setUsername('')
+    } catch (requestError) {
+      setResetError(t(requestError.response?.data?.message || requestError.message || 'Unable to send password reset instructions.'))
+    } finally {
+      setResetSending(false)
+    }
+  }
+
+  return (
+    <div className="row g-4 mb-4">
+      <div className="col-lg-6">
+        <section className="card h-100" aria-labelledby="admin-password-heading">
+          <div className="card-body">
+            <h2 className="h5 mb-1" id="admin-password-heading">{t('Change your password')}</h2>
+            <p className="text-secondary">{t('Verify your current password before choosing a new one.')}</p>
+            {passwordError && <div className="alert alert-danger" role="alert">{passwordError}</div>}
+            {passwordNotice && <div className="alert alert-success" role="status">{passwordNotice}</div>}
+            <form className="vstack gap-3" onSubmit={changeOwnPassword}>
+              <PasswordInput
+                autoComplete="current-password"
+                id="settings-current-password"
+                label={t('Current password')}
+                onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
+                required
+                value={passwordForm.currentPassword}
+              />
+              <PasswordInput
+                autoComplete="new-password"
+                hint={PASSWORD_HINT}
+                id="settings-new-password"
+                label={t('New password')}
+                maxLength={200}
+                minLength={8}
+                onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
+                pattern={PASSWORD_PATTERN}
+                required
+                title={PASSWORD_HINT}
+                value={passwordForm.newPassword}
+              />
+              <PasswordInput
+                autoComplete="new-password"
+                id="settings-confirm-password"
+                label={t('Confirm new password')}
+                maxLength={200}
+                minLength={8}
+                onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                pattern={PASSWORD_PATTERN}
+                required
+                title={PASSWORD_HINT}
+                value={passwordForm.confirmPassword}
+              />
+              <div>
+                <button className="btn btn-primary" disabled={passwordSaving} type="submit">
+                  {t(passwordSaving ? 'Updating…' : 'Update password')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+      <div className="col-lg-6">
+        <section className="card h-100" aria-labelledby="user-password-reset-heading">
+          <div className="card-body">
+            <h2 className="h5 mb-1" id="user-password-reset-heading">{t('Reset a user password')}</h2>
+            <p className="text-secondary">{t('Enter a username to send password-reset instructions to that user’s registered email. The user completes the reset with their verification code.')}</p>
+            {resetError && <div className="alert alert-danger" role="alert">{resetError}</div>}
+            {resetNotice && <div className="alert alert-success" role="status">{resetNotice}</div>}
+            <form className="vstack gap-3" onSubmit={sendUserReset}>
+              <div>
+                <label className="form-label" htmlFor="reset-user-username">{t('Username')}</label>
+                <input
+                  autoComplete="off"
+                  className="form-control"
+                  id="reset-user-username"
+                  maxLength="60"
+                  onChange={(event) => setUsername(event.target.value)}
+                  required
+                  value={username}
+                />
+              </div>
+              <div>
+                <button className="btn btn-outline-primary" disabled={resetSending} type="submit">
+                  {t(resetSending ? 'Sending…' : 'Send reset instructions')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function ChatAvailabilitySettings() {
+  const { t } = useLanguage()
+  const [enabled, setEnabled] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    let active = true
+    adminService.getChatSettings()
+      .then((response) => {
+        if (active) setEnabled(response.data?.enabled !== false)
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.response?.data?.message || requestError.message || t('Unable to load chat settings.'))
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [t])
+
+  async function update(event) {
+    const nextEnabled = event.target.checked
+    setSaving(true)
+    setError('')
+    setNotice('')
+    try {
+      const response = await adminService.updateChatSettings(nextEnabled)
+      setEnabled(response.data?.enabled === true)
+      setNotice(t(nextEnabled ? 'Chat is enabled for all users.' : 'Chat is disabled for all users.'))
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || requestError.message || t('Unable to update chat settings.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="card mb-4" aria-labelledby="chat-availability-heading">
+      <div className="card-body">
+        <h2 className="h5 mb-1" id="chat-availability-heading">{t('Chat availability')}</h2>
+        <p className="text-secondary">{t('Disable group and private chat platform-wide when needed.')}</p>
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
+        {notice && <div className="alert alert-success" role="status">{notice}</div>}
+        <div className="form-check form-switch">
+          <input
+            checked={enabled}
+            className="form-check-input"
+            disabled={loading || saving || Boolean(error && loading)}
+            id="chat-enabled"
+            onChange={update}
+            type="checkbox"
+          />
+          <label className="form-check-label fw-semibold" htmlFor="chat-enabled">
+            {t(loading ? 'Loading chat settings…' : enabled ? 'Chat is enabled' : 'Chat is disabled')}
+          </label>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function SystemSettings() {
   const { t } = useLanguage()
   const {
@@ -200,6 +409,8 @@ function SystemSettings() {
           updateMaintenance={updateMaintenance}
         />
       )}
+      <ChatAvailabilitySettings />
+      <AccountSecuritySettings />
       <AdminResourcePage
         columns={columns}
         createLabel="Add setting"

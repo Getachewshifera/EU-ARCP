@@ -52,6 +52,18 @@ test('maintenance mode allows admins and the status endpoint', async () => {
   await middleware({ path: '/users' }, createResponse(), () => { adminContinued = true; });
   assert.equal(adminContinued, true);
 
+  const uppercaseAdminMiddleware = createMaintenanceMiddleware({
+    connection: { readyState: 1 },
+    getState: async () => ({ enabled: true, message: 'Maintenance.' }),
+    authenticate: (request, _response, next) => {
+      request.user = { role: 'ADMIN' };
+      return next();
+    },
+  });
+  let uppercaseAdminContinued = false;
+  await uppercaseAdminMiddleware({ path: '/users' }, createResponse(), () => { uppercaseAdminContinued = true; });
+  assert.equal(uppercaseAdminContinued, true);
+
   let statusContinued = false;
   await middleware({ path: '/site/maintenance' }, createResponse(), () => { statusContinued = true; });
   assert.equal(statusContinued, true);

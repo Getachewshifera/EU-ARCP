@@ -6,10 +6,13 @@ import DashboardLayout from '../components/layout/DashboardLayout.jsx'
 import AcademicStructure from '../pages/admin/AcademicStructure.jsx'
 import ActivityLogs from '../pages/admin/ActivityLogs.jsx'
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx'
+import AdminProfile from '../pages/admin/AdminProfile.jsx'
 import AdminPosts from '../pages/admin/AdminPosts.jsx'
+import AdminPrivateMessages from '../pages/admin/PrivateMessages.jsx'
 import Categories from '../pages/admin/Categories.jsx'
 import ContactMessages from '../pages/admin/ContactMessages.jsx'
 import Groups from '../pages/admin/Groups.jsx'
+import AdminGroupChat from '../pages/admin/GroupChat.jsx'
 import Materials from '../pages/admin/Materials.jsx'
 import RegistrationRequests from '../pages/admin/RegistrationRequests.jsx'
 import Reports from '../pages/admin/Reports.jsx'
@@ -119,6 +122,8 @@ function AppRoutes() {
         <Route path="/admin" element={<AdminArea />}>
           <Route index element={<AdminDashboard />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="password" element={<StudentChangePassword />} />
           <Route path="users" element={<Users />} />
           <Route path="registrations" element={<RegistrationRequests />} />
           <Route path="universities" element={<Universities />} />
@@ -126,6 +131,8 @@ function AppRoutes() {
           <Route path="categories" element={<Categories />} />
           <Route path="materials" element={<Materials />} />
           <Route path="groups" element={<Groups />} />
+          <Route path="groups/:id/chat" element={<AdminGroupChat />} />
+          <Route path="messages" element={<AdminPrivateMessages />} />
           <Route path="reports" element={<Reports />} />
           <Route path="posts" element={<AdminPosts />} />
           <Route path="contact-messages" element={<ContactMessages />} />

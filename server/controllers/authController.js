@@ -8,14 +8,14 @@ const College = require('../models/College');
 const Department = require('../models/Department');
 const Program = require('../models/Program');
 const RegistrationRequest = require('../models/RegistrationRequest');
-const { sendOtpEmail, sendActivationEmail } = require('../services/emailService');
+const { sendActivationEmail } = require('../services/emailService');
+const { saveAndSendOtp } = require('../services/otpService');
 const { generateUniqueUsername, normalizeIdentityId } = require('../services/usernameService');
 const { generatePassword } = require('../utils/generatePassword');
 const { hashPassword, hashSecret, verifyPassword } = require('../utils/password');
 const { validatePasswordPolicy } = require('../services/passwordService');
 const { signToken } = require('../utils/token');
 
-const OTP_LIFETIME_MS = 10 * 60 * 1000;
 const ACTIVATION_WINDOW_MS = 5 * 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 
@@ -31,27 +31,6 @@ function publicUser(user) {
   delete account.resetTokenHash;
   delete account.resetTokenExpiresAt;
   return account;
-}
-
-async function saveAndSendOtp(user, purpose) {
-  const otp = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
-  user.otpHash = hashSecret(otp);
-  user.otpPurpose = purpose;
-  user.otpExpiresAt = new Date(Date.now() + OTP_LIFETIME_MS);
-  user.otpAttempts = 0;
-  user.otpLockedUntil = null;
-  await user.save();
-  try {
-    await sendOtpEmail(user.email, otp, purpose);
-  } catch (error) {
-    user.otpHash = undefined;
-    user.otpPurpose = undefined;
-    user.otpExpiresAt = undefined;
-    user.otpAttempts = 0;
-    user.otpLockedUntil = null;
-    await user.save();
-    throw new Error('Email delivery is unavailable. Please try again later.');
-  }
 }
 
 async function validateAcademicReferences({ universityId, collegeId, departmentId, programId, level }) {
@@ -144,11 +123,11 @@ async function register(request, response, next) {
     let registrationRecord = null;
     const generatedUsername = await generateUniqueUsername({ role, identityId });
     const temporaryPassword = generatePassword(14);
-    const profilePhoto = request.file ? `/uploads/${request.file.filename}` : (typeof payload.profilePhoto === 'string' ? payload.profilePhoto.trim() : '');
+    const profilePhoto = request.file ? request.file.filename : (typeof payload.profilePhoto === 'string' ? payload.profilePhoto.trim() : '');
 
-    if (request.file && !['image/jpeg', 'image/png'].includes(request.file.mimetype)) {
+    if (request.file && !['image/jpeg', 'image/png', 'image/webp'].includes(request.file.mimetype)) {
       await fs.unlink(request.file.path).catch(() => {});
-      return response.status(400).json({ message: 'Profile photo must be a JPEG or PNG image.' });
+      return response.status(400).json({ message: 'Profile photo must be a JPEG, PNG, or WebP image.' });
     }
 
     try {

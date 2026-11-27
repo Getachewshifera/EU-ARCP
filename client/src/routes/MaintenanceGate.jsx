@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.js'
 import useTheme from '../hooks/useTheme.js'
 import useLanguage from '../hooks/useLanguage.js'
@@ -15,9 +15,8 @@ function MaintenanceNotice({ message }) {
         <h1>{t('We’ll be back soon')}</h1>
         <p className="maintenance-message">{message}</p>
         <p className="maintenance-note">{t('Your account and shared materials are safe. Please check back shortly.')}</p>
-        <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+        <div className="d-flex justify-content-center mt-3">
           <LanguageToggle />
-          <Link className="btn btn-outline-primary" to="/login">{t('Administrator sign in')}</Link>
         </div>
       </div>
     </main>
@@ -34,7 +33,10 @@ function MaintenanceGate({ children }) {
     return <main className="container py-5 text-secondary" role="status">{t('Checking platform availability…')}</main>
   }
 
-  if (maintenance.enabled && user?.role !== 'admin' && location.pathname !== '/login') {
+  const isAdmin = String(user?.role || '').toLowerCase() === 'admin'
+  const isLoginPage = location.pathname.replace(/\/+$/, '') === '/login'
+
+  if (maintenance.enabled && !isAdmin && !isLoginPage) {
     return <MaintenanceNotice message={maintenance.message} />
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import adminService from '../../services/adminService.js'
 import AdminPostImage from '../../components/posts/AdminPostImage.jsx'
+import PostFeed from '../../components/posts/PostFeed.jsx'
 import useLanguage from '../../hooks/useLanguage.js'
 
 const EMPTY_FORM = { title: '', content: '', status: 'published' }
@@ -16,6 +17,7 @@ function AdminPosts() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const postFeedRefreshKey = posts.map((post) => `${post._id}:${post.updatedAt || ''}`).join('|')
 
   async function loadPosts() {
     try {
@@ -196,6 +198,9 @@ function AdminPosts() {
           ))}
         </div>
       ) : <div className="card card-body text-secondary">{t('No posts yet. Create one to share an update.')}</div>}
+      <div className="mt-4">
+        <PostFeed compact refreshKey={postFeedRefreshKey} />
+      </div>
     </section>
   )
 }

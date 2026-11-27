@@ -3,6 +3,7 @@ const buckets = new Map();
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_REQUESTS = 30;
 const MAX_MATERIAL_UPLOADS = 10;
+const MAX_CHAT_MESSAGES = 120;
 
 const cleanupTimer = setInterval(() => {
   const now = Date.now();
@@ -53,4 +54,21 @@ function materialUploadRateLimit(request, response, next) {
   return next();
 }
 
-module.exports = { authRateLimit, contactRateLimit, materialUploadRateLimit };
+function chatMessageRateLimit(request, response, next) {
+  const now = Date.now();
+  const userId = request.user?._id ? String(request.user._id) : 'anonymous';
+  const key = `chat-message:${userId}:${request.ip || request.socket.remoteAddress || 'unknown'}`;
+  let bucket = buckets.get(key);
+  if (!bucket || bucket.expiresAt <= now) {
+    bucket = { count: 0, expiresAt: now + WINDOW_MS };
+    buckets.set(key, bucket);
+  }
+  bucket.count += 1;
+  if (bucket.count > MAX_CHAT_MESSAGES) {
+    response.set('Retry-After', String(Math.ceil((bucket.expiresAt - now) / 1000)));
+    return response.status(429).json({ message: 'Too many chat messages. Please try again later.' });
+  }
+  return next();
+}
+
+module.exports = { authRateLimit, chatMessageRateLimit, contactRateLimit, materialUploadRateLimit };

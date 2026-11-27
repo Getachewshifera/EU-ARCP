@@ -29,7 +29,7 @@ function createMaintenanceMiddleware({
     if (!state.enabled) return next();
 
     return authenticate(request, response, () => {
-      if (request.user?.role === 'admin') return next();
+      if (String(request.user?.role || '').toLowerCase() === 'admin') return next();
       return response.status(503).json({ maintenance: true, message: state.message });
     });
   };

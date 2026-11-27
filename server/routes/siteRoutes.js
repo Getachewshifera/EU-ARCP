@@ -7,6 +7,8 @@ const controller = require('../controllers/siteController');
 const router = express.Router();
 router.get('/appearance', controller.getAppearance);
 router.put('/appearance', authMiddleware, adminMiddleware, controller.updateAppearance);
+router.get('/chat', controller.getChatStatus);
+router.put('/chat', authMiddleware, adminMiddleware, controller.updateChatStatus);
 router.get('/maintenance', controller.getMaintenance);
 router.put('/maintenance', authMiddleware, adminMiddleware, controller.updateMaintenance);
 

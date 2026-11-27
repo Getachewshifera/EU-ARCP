@@ -446,7 +446,7 @@ function Register() {
 
         <div>
           <label className="form-label" htmlFor="register-profile-photo">{t('Profile photo')}</label>
-          <input accept="image/png,image/jpeg" className="form-control" disabled={submitting} id="register-profile-photo" name="profilePhoto" onChange={update} required type="file" />
+          <input accept="image/png,image/jpeg,image/webp" className="form-control" disabled={submitting} id="register-profile-photo" name="profilePhoto" onChange={update} required type="file" />
         </div>
 
         <button className="btn btn-primary btn-lg" disabled={submitting || loading.universities} type="submit">

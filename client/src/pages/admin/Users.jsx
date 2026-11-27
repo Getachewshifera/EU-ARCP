@@ -24,7 +24,8 @@ function Users() {
     return records.filter((user) => {
       const name = user.name || [user.firstName, user.lastName].filter(Boolean).join(' ')
       const matchesQuery = !normalizedQuery
-        || `${displayValue(name)} ${displayValue(user.email)}`.toLowerCase().includes(normalizedQuery)
+        || `${displayValue(name)} ${displayValue(user.email)} ${displayValue(user.phone)} ${displayValue(user.username)}`
+          .toLowerCase().includes(normalizedQuery)
       const matchesRole = !role || user.role === role
       const matchesStatus = !status || (status === 'active'
         ? user.isActive !== false && user.status !== 'suspended'
@@ -53,7 +54,7 @@ function Users() {
 
   return (
     <AdminListPage
-      description="Search accounts, assign roles, suspend or reactivate access, and permanently delete accounts."
+      description="Review complete user profiles, assign roles, manage access, and delete accounts."
       emptyMessage="No user accounts match these filters."
       loading={loading}
       onRefresh={reload}
@@ -67,7 +68,7 @@ function Users() {
               aria-label={t('Search users')}
               className="form-control"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={t('Search name or email')}
+              placeholder={t('Search name, email, phone or username')}
               type="search"
               value={query}
             />
