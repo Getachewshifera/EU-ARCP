@@ -29,7 +29,7 @@ const translations = {
     'Switch to English': 'ወደ እንግሊዝኛ ቀይር',
     'Switch to light mode': 'ወደ ብርሃን ገጽታ ቀይር',
     'Switch to dark mode': 'ወደ ጨለማ ገጽታ ቀይር',
-    'Welcome to EUARCP': 'ወደ EUARCP እንኳን በደህና መጡ',
+    'Welcome to EUARCP': 'እንኳን ወደ EUARCP  በደህና መጡ',
     'Your Knowledge.': 'እውቀትዎ።',
     'Your University.': 'ዩኒቨርሲቲዎ።',
     'Your Future.': 'የወደፊትዎ።',

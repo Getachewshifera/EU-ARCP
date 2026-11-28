@@ -95,7 +95,7 @@ async function startServer() {
     const httpServer = http.createServer(app);
     attachSocketServer(httpServer);
     httpServer.listen(PORT, () => {
-      console.log(`EU-ARCP API listening on port ${PORT}`);
+      // console.log(`EU-ARCP API listening on port ${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start the server:', error.message);

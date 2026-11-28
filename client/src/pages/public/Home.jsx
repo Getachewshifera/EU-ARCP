@@ -131,10 +131,10 @@ function Home() {
           <div className="container py-5">
             <div className="row align-items-center g-5 py-lg-4">
               <div className="col-lg-6">
-                <span className="badge rounded-pill text-bg-primary-subtle text-primary px-3 py-2 fw-semibold mb-3">
+                <span className="badge rounded-pill text-bg-primary-subtle text-primary px-3 py-2 fs-4 mb-3">
                   {t('Welcome to EUARCP')}
                 </span>
-                <h1 className="display-4 fw-bold lh-sm text-balance">
+                <h1 className="display-4 fw-bold lh-sm text-balance ">
                   {t('Your Knowledge.')}<br />
                   <span className="text-primary">{t('Your University.')}</span><br />
                   {t('Your Future.')}

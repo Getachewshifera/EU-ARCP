@@ -33,7 +33,7 @@ function PostFeed({ compact = false, refreshKey }) {
           <h2 className="h4 mb-0">{t('Latest posts')}</h2>
         </div>
       </div>
-      {error ? <div className="alert alert-danger mb-0" role="alert">{error}</div> : (
+      {error ? <div className="alert alert-danger mb-0" role="alert">{"No Internet.Please connect to WIFI or Internet."}</div> : (
         <div className="row g-3">
           {posts.slice(0, compact ? 2 : 6).map((post) => (
             <div className={compact ? 'col-12' : 'col-12 col-md-6 col-xl-4'} key={post._id}>

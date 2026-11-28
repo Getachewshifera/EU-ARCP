@@ -44,9 +44,9 @@ function MaintenanceGate({ children }) {
     <>
       {maintenanceError && (
         <div className="container pt-3">
-          <div className="alert alert-warning" role="status">
+          {/* <div className="alert alert-warning" role="status">
             {t('Maintenance status could not be verified. Some platform services may be unavailable.')}
-          </div>
+          </div> */}
         </div>
       )}
       {children}

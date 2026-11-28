@@ -9,14 +9,14 @@ async function connectDatabase(mongoUri) {
   }
   mongoose.set('strictQuery', true);
   await mongoose.connect(uri);
-  console.log('MongoDB connected successfully.');
+   // console.log('MongoDB connected successfully.');
   return mongoose.connection;
 }
 
 async function disconnectDatabase() {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
-    console.log('MongoDB disconnected.');
+    // console.log('MongoDB disconnected.');
   }
 }
 
